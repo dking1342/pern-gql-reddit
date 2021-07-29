@@ -12,7 +12,7 @@ export class Post {
   @Property({type: 'date'})
   createdAt: Date = new Date();
 
-  @Field(()=>String)
+  @Field(()=> String)
   @Property({ type:'date', onUpdate: () => new Date() })
   updatedAt: Date = new Date();
 

@@ -36,10 +36,6 @@ const main = async () => {
         app.listen(PORT,()=> console.log('server listening on port 4000'));
 
 
-        // crud operations //
-        // creates the posts on each run
-        // const post = orm.em.create(Post,{title:'my second post'})
-        // await orm.em.persistAndFlush(post);
 
         // retreives the posts that are in the db
         // const posts = await orm.em.find(Post,{});
