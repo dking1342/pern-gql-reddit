@@ -1,5 +1,5 @@
 import { __db_name__, __db_pw__, __db_type__, __db_user__, __prod__ } from "./constants";
-import { Post } from "./entities/Post";
+import {Post} from "./entities/Post";
 import { MikroORM } from '@mikro-orm/core';
 import path from 'path';
 
