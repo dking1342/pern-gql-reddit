@@ -1,13 +1,13 @@
 import 'reflect-metadata';
-import { MikroORM } from "@mikro-orm/core";
-// import {Post} from "./entities/Post";
-import mikroConfig from './mikro-orm.config';
 import express from 'express';
 import dotenv from 'dotenv';
+import { MikroORM } from "@mikro-orm/core";
+import mikroConfig from './mikro-orm.config';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
 import { TestResolver } from "./resolvers/test";
 import { PostResolver } from "./resolvers/post";
+import { UserResolver } from './resolvers/user';
 
 dotenv.config();
 
@@ -21,27 +21,21 @@ const main = async () => {
         const app = express();
         const PORT = process.env.PORT;
 
+        // apollo server config
         const apolloServer = new ApolloServer({
             schema: await buildSchema({
-                resolvers:[TestResolver,PostResolver],
+                resolvers:[TestResolver,PostResolver,UserResolver],
                 validate:false,
             }),
             context:()=>({ em: orm.em })
         });
 
+        // apollo server init
         await apolloServer.start();
         await apolloServer.applyMiddleware({app});
 
-
+        // express app listen
         app.listen(PORT,()=> console.log('server listening on port 4000'));
-
-
-
-        // retreives the posts that are in the db
-        // const posts = await orm.em.find(Post,{});
-        // console.log(posts);
-
-        
     } catch (error) {
         console.log('---- error ----',error.message);     
     }

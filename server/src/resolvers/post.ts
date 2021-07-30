@@ -32,7 +32,7 @@ export class PostResolver{
 
     @Mutation(()=>Post,{nullable:true})
     async updatePost(
-        @Arg("id",()=>String) id: number,
+        @Arg("id",()=>Int) id: number,
         @Arg("title",()=>String, { nullable:true}) title: string,
         @Ctx() { em }: MyContext
     ): Promise<Post | null>{
@@ -47,7 +47,7 @@ export class PostResolver{
 
     @Mutation(()=>Boolean)
     async deletePost(
-        @Arg("id",()=>String) id: number,
+        @Arg("id",()=>Int) id: number,
         @Ctx() { em }: MyContext
     ): Promise<boolean>{
         try {
