@@ -16,9 +16,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
-const User_1 = require("../entities/User");
 const type_graphql_1 = require("type-graphql");
 const argon2_1 = __importDefault(require("argon2"));
+const validation_1 = require("../utils/validation");
+const User_1 = require("../entities/User");
 let UsernamePasswordInput = class UsernamePasswordInput {
 };
 __decorate([
@@ -53,36 +54,22 @@ __decorate([
 ], UserResponse.prototype, "errors", void 0);
 __decorate([
     type_graphql_1.Field(() => User_1.User, { nullable: true }),
-    __metadata("design:type", User_1.User)
+    __metadata("design:type", Object)
 ], UserResponse.prototype, "user", void 0);
 UserResponse = __decorate([
     type_graphql_1.ObjectType()
 ], UserResponse);
 let UserResolver = class UserResolver {
     async register(options, { em }) {
-        if (options.username.length <= 2) {
+        let { errorLog, valid } = validation_1.validateInput(options);
+        if (!valid) {
             return {
-                errors: [
-                    {
-                        field: "username",
-                        message: "username length must be greater than two"
-                    }
-                ]
-            };
-        }
-        ;
-        if (options.password.length <= 3) {
-            return {
-                errors: [
-                    {
-                        field: "password",
-                        message: "password length must be greater than three"
-                    }
-                ]
+                errors: errorLog
             };
         }
         const hashedPassword = await argon2_1.default.hash(options.password);
-        const user = em.create(User_1.User, { username: options.username, password: hashedPassword });
+        let user = em.create(User_1.User, { username: options.username, password: hashedPassword });
+        const token = validation_1.generateToken(user);
         try {
             await em.persistAndFlush(user);
         }
@@ -99,7 +86,7 @@ let UserResolver = class UserResolver {
             }
         }
         return {
-            user
+            user: Object.assign(Object.assign({}, user), { token }),
         };
     }
     async login(options, { em }) {
@@ -127,8 +114,9 @@ let UserResolver = class UserResolver {
             };
         }
         ;
+        const token = validation_1.generateToken(user);
         return {
-            user
+            user: Object.assign(Object.assign({}, user), { token })
         };
     }
 };

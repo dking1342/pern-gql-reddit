@@ -25,7 +25,7 @@ const main = async () => {
                 resolvers: [test_1.TestResolver, post_1.PostResolver, user_1.UserResolver],
                 validate: false,
             }),
-            context: () => ({ em: orm.em })
+            context: (req) => ({ em: orm.em, req: req })
         });
         await apolloServer.start();
         await apolloServer.applyMiddleware({ app });

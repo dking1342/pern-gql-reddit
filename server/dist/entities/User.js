@@ -42,6 +42,11 @@ __decorate([
     core_1.Property({ type: 'text' }),
     __metadata("design:type", String)
 ], User.prototype, "password", void 0);
+__decorate([
+    type_graphql_1.Field(() => String),
+    core_1.Property({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "token", void 0);
 User = __decorate([
     type_graphql_1.ObjectType(),
     core_1.Entity()

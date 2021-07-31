@@ -23,4 +23,7 @@ export class User {
   @Property({type:'text'})
   password!: string;
 
+  @Field(()=>String)
+  @Property({type:'text',nullable:true})
+  token: string
 }

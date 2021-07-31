@@ -1,7 +1,8 @@
-import { User } from "../entities/User";
 import { MyContext } from "src/types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from "type-graphql";
 import argon2 from 'argon2';
+import { generateToken, validateInput } from "../utils/validation";
+import { User } from "../entities/User";
 
 // alternate way of adding argument
 @InputType()
@@ -27,7 +28,7 @@ class UserResponse{
     errors?:FieldError[]
 
     @Field(()=>User,{nullable:true})
-    user?:User
+    user?:User | null
 }
 
 @Resolver()
@@ -37,44 +38,20 @@ export class UserResolver{
         @Arg('options',()=>UsernamePasswordInput) options: UsernamePasswordInput,
         @Ctx() {em}: MyContext
     ):Promise<UserResponse>{
-        // one way to check if user already exists
-        // const checkUser = await em.findOne(User,{username:options.username});
-        // if(checkUser){
-        //     return{
-        //         errors:[
-        //             {
-        //                 field:"username",
-        //                 message:"username already exists"
-        //             }
-        //         ]
-        //     }
-        // }
+        let { errorLog, valid } = validateInput(options);
 
-        if(options.username.length <= 2){
+        if(!valid){
             return{
-                errors:[
-                    {
-                        field:"username",
-                        message:"username length must be greater than two"
-                    }
-                ]
-            }
-        };
-        if(options.password.length <= 3){
-            return{
-                errors:[
-                    {
-                        field:"password",
-                        message:"password length must be greater than three"
-                    }
-                ]
+                errors:errorLog
             }
         }
 
         const hashedPassword = await argon2.hash(options.password);
-        const user = em.create(User,{username:options.username, password:hashedPassword});
+        let user = em.create(User,{username:options.username, password:hashedPassword});
+        const token = generateToken(user!);
+
         try {
-            await em.persistAndFlush(user);            
+            await em.persistAndFlush(user);  
         } catch (error) {
             if(error.code === '23505'){
                 return{
@@ -87,9 +64,11 @@ export class UserResolver{
                 }
             }
         }
+
         return {
-            user
+            user:{...user,token},
         };
+
     }
 
     @Mutation(()=> UserResponse)
@@ -121,9 +100,14 @@ export class UserResolver{
                 ]
             }
         };
+        const token = generateToken(user!);
+
 
         return {
-            user
+            user:{...user,token}
         };
     }
+
+
+
 }

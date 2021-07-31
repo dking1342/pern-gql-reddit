@@ -27,7 +27,7 @@ const main = async () => {
                 resolvers:[TestResolver,PostResolver,UserResolver],
                 validate:false,
             }),
-            context:()=>({ em: orm.em })
+            context:(req)=>({ em: orm.em,req:req})
         });
 
         // apollo server init
