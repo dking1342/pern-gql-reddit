@@ -64,14 +64,3 @@ export const isAuth = (context:any):AuthResponse => {
         }
     }
 }
-
-// auth user req is put in the context
-// let { auth, errors } = isAuth(req);
-// console.log('username', Boolean(errors.length))
-// if(Boolean(errors.length)){
-//     return{
-//         errors
-//     }
-// } else {
-//     console.log(auth.username)
-// }

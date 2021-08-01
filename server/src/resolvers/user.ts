@@ -1,8 +1,9 @@
 import { MyContext } from "src/types";
-import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from "type-graphql";
+import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import argon2 from 'argon2';
 import { generateToken, validateInput } from "../utils/validation";
 import { User } from "../entities/User";
+import { isAuth } from "../utils/auth";
 
 // alternate way of adding argument
 @InputType()
@@ -21,18 +22,58 @@ class FieldError {
     message:string;
 }
 
-
 @ObjectType()
 class UserResponse{
     @Field(()=>[FieldError],{nullable:true})
     errors?:FieldError[]
 
     @Field(()=>User,{nullable:true})
-    user?:User | null
+    user?:User | null 
+}
+
+@ObjectType()
+class UserInfoResponse{
+    @Field(()=>[FieldError],{nullable:true})
+    errors?:FieldError[] | []
+
+    @Field(()=>UserInfo,{nullable:true})
+    userInfo?:UserInfo | null
+}
+
+@ObjectType()
+class UserInfo{
+    @Field()
+    username:string
+    @Field()
+    iat:number
+    @Field()
+    exp:number
 }
 
 @Resolver()
 export class UserResolver{
+    @Query(()=> UserInfoResponse,{nullable:true})
+    userInfo(
+        @Ctx() { req }: MyContext
+    ):UserInfoResponse{
+        let { auth, errors } = isAuth(req);
+        if(Boolean(errors.length)){
+            return{
+                errors,
+                userInfo:null
+            }
+        } else {
+            return{
+                errors:[],
+                userInfo:{
+                    username:auth.username,
+                    iat:auth.iat,
+                    exp:auth.exp
+                }
+            }
+        }
+    }
+
     @Mutation(()=> UserResponse)
     async register(
         @Arg('options',()=>UsernamePasswordInput) options: UsernamePasswordInput,

@@ -34,6 +34,7 @@ const validateInput = (options) => {
 exports.validateInput = validateInput;
 const generateToken = (user) => {
     return jsonwebtoken_1.default.sign({
+        id: user.id,
         username: user.username,
     }, constants_1.__TOKEN_SECRET__, { expiresIn: '1hr' });
 };

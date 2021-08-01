@@ -18,6 +18,7 @@ type ValidationResponse = {
 }
 
 type User = {
+    id:number,
     createdAt: Date,
     updatedAt: Date,
     username: string,
@@ -60,6 +61,7 @@ export const validateInput = (options:UserCredentials):ValidationResponse => {
 export const generateToken = (user:User) => {
     return jwt.sign(
         {
+            id: user.id,
             username: user.username,
         },
         __TOKEN_SECRET__ as jwt.Secret,

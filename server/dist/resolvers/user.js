@@ -20,6 +20,7 @@ const type_graphql_1 = require("type-graphql");
 const argon2_1 = __importDefault(require("argon2"));
 const validation_1 = require("../utils/validation");
 const User_1 = require("../entities/User");
+const auth_1 = require("../utils/auth");
 let UsernamePasswordInput = class UsernamePasswordInput {
 };
 __decorate([
@@ -59,7 +60,56 @@ __decorate([
 UserResponse = __decorate([
     type_graphql_1.ObjectType()
 ], UserResponse);
+let UserInfoResponse = class UserInfoResponse {
+};
+__decorate([
+    type_graphql_1.Field(() => [FieldError], { nullable: true }),
+    __metadata("design:type", Array)
+], UserInfoResponse.prototype, "errors", void 0);
+__decorate([
+    type_graphql_1.Field(() => UserInfo, { nullable: true }),
+    __metadata("design:type", Object)
+], UserInfoResponse.prototype, "userInfo", void 0);
+UserInfoResponse = __decorate([
+    type_graphql_1.ObjectType()
+], UserInfoResponse);
+let UserInfo = class UserInfo {
+};
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", String)
+], UserInfo.prototype, "username", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Number)
+], UserInfo.prototype, "iat", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Number)
+], UserInfo.prototype, "exp", void 0);
+UserInfo = __decorate([
+    type_graphql_1.ObjectType()
+], UserInfo);
 let UserResolver = class UserResolver {
+    userInfo({ req }) {
+        let { auth, errors } = auth_1.isAuth(req);
+        if (Boolean(errors.length)) {
+            return {
+                errors,
+                userInfo: null
+            };
+        }
+        else {
+            return {
+                errors: [],
+                userInfo: {
+                    username: auth.username,
+                    iat: auth.iat,
+                    exp: auth.exp
+                }
+            };
+        }
+    }
     async register(options, { em }) {
         let { errorLog, valid } = validation_1.validateInput(options);
         if (!valid) {
@@ -120,6 +170,13 @@ let UserResolver = class UserResolver {
         };
     }
 };
+__decorate([
+    type_graphql_1.Query(() => UserInfoResponse, { nullable: true }),
+    __param(0, type_graphql_1.Ctx()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", UserInfoResponse)
+], UserResolver.prototype, "userInfo", null);
 __decorate([
     type_graphql_1.Mutation(() => UserResponse),
     __param(0, type_graphql_1.Arg('options', () => UsernamePasswordInput)),
