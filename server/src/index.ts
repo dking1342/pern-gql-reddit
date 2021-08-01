@@ -8,6 +8,7 @@ import { buildSchema } from 'type-graphql';
 import { TestResolver } from "./resolvers/test";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from './resolvers/user';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ const main = async () => {
         // express server init
         const app = express();
         const PORT = process.env.PORT;
+        app.use(cors());
 
         // apollo server config
         const apolloServer = new ApolloServer({

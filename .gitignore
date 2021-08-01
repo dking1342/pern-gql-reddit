@@ -1,5 +1,12 @@
 node_modules/
 /server/.env
+/client/.next
+/client/next
+/.next
+.next/
+client/next
+client/.next
+
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 

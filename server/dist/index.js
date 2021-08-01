@@ -13,6 +13,7 @@ const type_graphql_1 = require("type-graphql");
 const test_1 = require("./resolvers/test");
 const post_1 = require("./resolvers/post");
 const user_1 = require("./resolvers/user");
+const cors_1 = __importDefault(require("cors"));
 dotenv_1.default.config();
 const main = async () => {
     try {
@@ -20,6 +21,7 @@ const main = async () => {
         await orm.getMigrator().up();
         const app = express_1.default();
         const PORT = process.env.PORT;
+        app.use(cors_1.default());
         const apolloServer = new apollo_server_express_1.ApolloServer({
             schema: await type_graphql_1.buildSchema({
                 resolvers: [test_1.TestResolver, post_1.PostResolver, user_1.UserResolver],

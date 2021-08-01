@@ -4,15 +4,17 @@ import React, { ButtonHTMLAttributes } from 'react'
 type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
     text:string;
     isLoading:any;
+    backgroundColor?:string;
+    color?:string;
 }
 
 const Btn: React.FC<BtnProps> = (props) => {
     return(
         <Button
             type={props.type}
-            backgroundColor="teal"
+            backgroundColor={props.backgroundColor || "teal"}
             isLoading={props.isLoading}
-            color="white"
+            color={props.color || "white"}
             mt={4}
         >
             {props.text}
