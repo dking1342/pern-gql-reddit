@@ -2,7 +2,7 @@ import { MyContext } from "src/types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import argon2 from 'argon2';
 import { generateToken, validateInput } from "../utils/validation";
-import { User } from "../entities/User";
+import { Users } from "../entities/Users";
 import { isAuth } from "../utils/auth";
 
 // alternate way of adding argument
@@ -27,8 +27,8 @@ class UserResponse{
     @Field(()=>[FieldError],{nullable:true})
     errors?:FieldError[]
 
-    @Field(()=>User,{nullable:true})
-    user?:User | null 
+    @Field(()=>Users,{nullable:true})
+    user?:Users | null 
 }
 
 @ObjectType()
@@ -51,7 +51,7 @@ class UserInfo{
 }
 
 @Resolver()
-export class UserResolver{
+export class UsersResolver{
     @Query(()=> UserInfoResponse,{nullable:true})
     userInfo(
         @Ctx() { req }: MyContext
@@ -88,7 +88,7 @@ export class UserResolver{
         }
 
         const hashedPassword = await argon2.hash(options.password);
-        let user = em.create(User,{username:options.username, password:hashedPassword});
+        let user = em.create(Users,{username:options.username, password:hashedPassword});
         const token = generateToken(user!);
 
         try {
@@ -117,7 +117,7 @@ export class UserResolver{
         @Arg('options',()=>UsernamePasswordInput) options: UsernamePasswordInput,
         @Ctx() {em}: MyContext
     ):Promise<UserResponse>{
-        const user = await em.findOne(User,{username:options.username});
+        const user = await em.findOne(Users,{username:options.username});
 
         if(!user){
             return{

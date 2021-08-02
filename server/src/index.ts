@@ -5,9 +5,8 @@ import { MikroORM } from "@mikro-orm/core";
 import mikroConfig from './mikro-orm.config';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
-import { TestResolver } from "./resolvers/test";
 import { PostResolver } from "./resolvers/post";
-import { UserResolver } from './resolvers/user';
+import { UsersResolver } from './resolvers/users';
 import cors from 'cors';
 
 dotenv.config();
@@ -26,7 +25,7 @@ const main = async () => {
         // apollo server config
         const apolloServer = new ApolloServer({
             schema: await buildSchema({
-                resolvers:[TestResolver,PostResolver,UserResolver],
+                resolvers:[PostResolver,UsersResolver],
                 validate:false,
             }),
             context:(req)=>({ em: orm.em,req:req})

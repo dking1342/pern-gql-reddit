@@ -10,9 +10,8 @@ const core_1 = require("@mikro-orm/core");
 const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
 const apollo_server_express_1 = require("apollo-server-express");
 const type_graphql_1 = require("type-graphql");
-const test_1 = require("./resolvers/test");
 const post_1 = require("./resolvers/post");
-const user_1 = require("./resolvers/user");
+const users_1 = require("./resolvers/users");
 const cors_1 = __importDefault(require("cors"));
 dotenv_1.default.config();
 const main = async () => {
@@ -24,7 +23,7 @@ const main = async () => {
         app.use(cors_1.default());
         const apolloServer = new apollo_server_express_1.ApolloServer({
             schema: await type_graphql_1.buildSchema({
-                resolvers: [test_1.TestResolver, post_1.PostResolver, user_1.UserResolver],
+                resolvers: [post_1.PostResolver, users_1.UsersResolver],
                 validate: false,
             }),
             context: (req) => ({ em: orm.em, req: req })

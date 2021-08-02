@@ -14,13 +14,12 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserResolver = void 0;
+exports.UsersResolver = void 0;
 const type_graphql_1 = require("type-graphql");
 const argon2_1 = __importDefault(require("argon2"));
 const validation_1 = require("../utils/validation");
-const User_1 = require("../entities/User");
+const Users_1 = require("../entities/Users");
 const auth_1 = require("../utils/auth");
 let UsernamePasswordInput = class UsernamePasswordInput {
 };
@@ -55,7 +54,7 @@ __decorate([
     __metadata("design:type", Array)
 ], UserResponse.prototype, "errors", void 0);
 __decorate([
-    type_graphql_1.Field(() => User_1.User, { nullable: true }),
+    type_graphql_1.Field(() => Users_1.Users, { nullable: true }),
     __metadata("design:type", Object)
 ], UserResponse.prototype, "user", void 0);
 UserResponse = __decorate([
@@ -91,7 +90,7 @@ __decorate([
 UserInfo = __decorate([
     type_graphql_1.ObjectType()
 ], UserInfo);
-let UserResolver = class UserResolver {
+let UsersResolver = class UsersResolver {
     userInfo({ req }) {
         let { auth, errors } = auth_1.isAuth(req);
         if (Boolean(errors.length)) {
@@ -119,7 +118,7 @@ let UserResolver = class UserResolver {
             };
         }
         const hashedPassword = await argon2_1.default.hash(options.password);
-        let user = em.create(User_1.User, { username: options.username, password: hashedPassword });
+        let user = em.create(Users_1.Users, { username: options.username, password: hashedPassword });
         const token = validation_1.generateToken(user);
         try {
             await em.persistAndFlush(user);
@@ -141,7 +140,7 @@ let UserResolver = class UserResolver {
         };
     }
     async login(options, { em }) {
-        const user = await em.findOne(User_1.User, { username: options.username });
+        const user = await em.findOne(Users_1.Users, { username: options.username });
         if (!user) {
             return {
                 errors: [
@@ -177,7 +176,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", UserInfoResponse)
-], UserResolver.prototype, "userInfo", null);
+], UsersResolver.prototype, "userInfo", null);
 __decorate([
     type_graphql_1.Mutation(() => UserResponse),
     __param(0, type_graphql_1.Arg('options', () => UsernamePasswordInput)),
@@ -185,7 +184,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [UsernamePasswordInput, Object]),
     __metadata("design:returntype", Promise)
-], UserResolver.prototype, "register", null);
+], UsersResolver.prototype, "register", null);
 __decorate([
     type_graphql_1.Mutation(() => UserResponse),
     __param(0, type_graphql_1.Arg('options', () => UsernamePasswordInput)),
@@ -193,9 +192,9 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [UsernamePasswordInput, Object]),
     __metadata("design:returntype", Promise)
-], UserResolver.prototype, "login", null);
-UserResolver = __decorate([
+], UsersResolver.prototype, "login", null);
+UsersResolver = __decorate([
     type_graphql_1.Resolver()
-], UserResolver);
-exports.UserResolver = UserResolver;
-//# sourceMappingURL=user.js.map
+], UsersResolver);
+exports.UsersResolver = UsersResolver;
+//# sourceMappingURL=users.js.map
