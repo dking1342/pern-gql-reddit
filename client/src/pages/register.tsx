@@ -26,7 +26,14 @@ const Register: React.FC<registerProps> = ({}) => {
                         setErrors(toErrorMap(response.data.register.errors))
                     }
                     if(response.data?.register.user?.token){
-                        localStorage.setItem('userInfo',JSON.stringify(response.data.register.user.token));
+                        let userInfo = localStorage.getItem('userInfo');
+
+                        if(userInfo){
+                            localStorage.removeItem('userInfo')
+                            localStorage.setItem('userInfo',JSON.stringify(response.data.register.user));
+                        } else {
+                            localStorage.setItem('userInfo',JSON.stringify(response.data.register.user));
+                        }
                         router.push('/');
                     }
                 }}

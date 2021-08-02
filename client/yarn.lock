@@ -1855,12 +1855,20 @@
   dependencies:
     "@types/node" "*"
 
-"@urql/core@^2.1.4":
+"@urql/core@>=2.1.0", "@urql/core@^2.1.4":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@urql/core/-/core-2.1.5.tgz#8fbc0846d6020cee89dadbee07ffb0a618ab29d8"
   integrity sha512-iX30xZ6exdJbajv2S4gxVP+1ZEh57x9gEuUrpOCLWZp84970XDSo82xoz+11I+NGWiQNZfbIs6LTLaie/iG3OQ==
   dependencies:
     "@graphql-typed-document-node/core" "^3.1.0"
+    wonka "^4.0.14"
+
+"@urql/exchange-auth@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@urql/exchange-auth/-/exchange-auth-0.1.4.tgz#a8e90f76f824085fcd765107cc46cb238a568014"
+  integrity sha512-+jxpF1oTv9TQKh0MHDuFZDxIO291kUccO1LetF9SZ4YypAMcZRVbm5QWwqrS1S0B0p09ea7z18x5FT4M5TMokg==
+  dependencies:
+    "@urql/core" ">=2.1.0"
     wonka "^4.0.14"
 
 abort-controller@3.0.0:

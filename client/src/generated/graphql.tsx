@@ -148,6 +148,23 @@ export type RegisterMutation = (
   ) }
 );
 
+export type UserInfoQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UserInfoQuery = (
+  { __typename?: 'Query' }
+  & { userInfo?: Maybe<(
+    { __typename?: 'UserInfoResponse' }
+    & { errors?: Maybe<Array<(
+      { __typename?: 'FieldError' }
+      & Pick<FieldError, 'field' | 'message'>
+    )>>, userInfo?: Maybe<(
+      { __typename?: 'UserInfo' }
+      & Pick<UserInfo, 'username' | 'iat' | 'exp'>
+    )> }
+  )> }
+);
+
 
 export const LoginDocument = gql`
     mutation Login($username: String!, $password: String!) {
@@ -186,4 +203,23 @@ export const RegisterDocument = gql`
 
 export function useRegisterMutation() {
   return Urql.useMutation<RegisterMutation, RegisterMutationVariables>(RegisterDocument);
+};
+export const UserInfoDocument = gql`
+    query UserInfo {
+  userInfo {
+    errors {
+      field
+      message
+    }
+    userInfo {
+      username
+      iat
+      exp
+    }
+  }
+}
+    `;
+
+export function useUserInfoQuery(options: Omit<Urql.UseQueryArgs<UserInfoQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<UserInfoQuery>({ query: UserInfoDocument, ...options });
 };

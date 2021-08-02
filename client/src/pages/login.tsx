@@ -4,7 +4,7 @@ import React from 'react';
 import Btn from '../components/Btn';
 import InputField from '../components/InputField';
 import Wrapper from '../components/Wrapper';
-import { useLoginMutation, useRegisterMutation } from '../generated/graphql';
+import { useLoginMutation } from '../generated/graphql';
 import { toErrorMap } from '../utils/toErrorMap';
 import { useRouter } from "next/router";
 
@@ -30,9 +30,9 @@ const Login: React.FC<loginProps> = ({}) => {
 
                         if(userInfo){
                             localStorage.removeItem('userInfo')
-                            localStorage.setItem('userInfo',JSON.stringify(response.data.login.user.token));
+                            localStorage.setItem('userInfo',JSON.stringify(response.data.login.user));
                         } else {
-                            localStorage.setItem('userInfo',JSON.stringify(response.data.login.user.token));
+                            localStorage.setItem('userInfo',JSON.stringify(response.data.login.user));
                         }
                         router.push('/');
                     }
@@ -55,7 +55,7 @@ const Login: React.FC<loginProps> = ({}) => {
                         </Box>
                         <Btn 
                             type="submit"
-                            text="Register"
+                            text="Login"
                             isLoading={isSubmitting}
                         />
                     </Form>

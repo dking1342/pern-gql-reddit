@@ -1,0 +1,13 @@
+query UserInfo{
+  userInfo {
+    errors {
+      field
+      message
+    }
+    userInfo {
+      username
+      iat
+      exp
+    }
+  }
+}
