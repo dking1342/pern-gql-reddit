@@ -12,8 +12,6 @@ interface registerProps {
 
 }
 
-
-
 const Register: React.FC<registerProps> = ({}) => {
     const [_,register] = useRegisterMutation();
     const router = useRouter();
