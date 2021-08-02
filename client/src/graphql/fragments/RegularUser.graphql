@@ -1,0 +1,5 @@
+fragment RegularUser on Users {
+    id
+    username
+    token
+}

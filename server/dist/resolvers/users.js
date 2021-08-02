@@ -169,6 +169,11 @@ let UsersResolver = class UsersResolver {
             user: Object.assign(Object.assign({}, user), { token })
         };
     }
+    logout({ req }) {
+        let { errors } = auth_1.isAuth(req);
+        console.log(errors);
+        return !Boolean(errors.length);
+    }
 };
 __decorate([
     type_graphql_1.Query(() => UserInfoResponse, { nullable: true }),
@@ -193,6 +198,13 @@ __decorate([
     __metadata("design:paramtypes", [UsernamePasswordInput, Object]),
     __metadata("design:returntype", Promise)
 ], UsersResolver.prototype, "login", null);
+__decorate([
+    type_graphql_1.Mutation(() => Boolean),
+    __param(0, type_graphql_1.Ctx()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], UsersResolver.prototype, "logout", null);
 UsersResolver = __decorate([
     type_graphql_1.Resolver()
 ], UsersResolver);

@@ -149,6 +149,14 @@ export class UsersResolver{
         };
     }
 
+    @Mutation(()=>Boolean)
+    logout(
+        @Ctx(){req}:MyContext
+    ){
+        let { errors } = isAuth(req);
+        console.log(errors)
+        return !Boolean(errors.length)
+    }
 
 
 }
