@@ -3,6 +3,7 @@ import React, { } from 'react'
 import NextLink from 'next/link';
 import { useUserInfoQuery, useLogoutMutation } from '../generated/graphql';
 import { Button } from '@chakra-ui/button';
+// import { isServer } from '../utils/isServer';
 
 interface NavbarProps {
 
@@ -10,8 +11,9 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({}) => {
     const [{fetching:logoutFetching},logout] = useLogoutMutation();
-    const [{data,fetching,}] = useUserInfoQuery();
+    const [{data,fetching}] = useUserInfoQuery();
     let body = null;
+    console.log('nav data',data)
 
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
@@ -34,10 +36,10 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
             </>
         )
     } else {
-        let isLoggedIn = data?.userInfo?.userInfo?.username;
+        let isLoggedIn = data?.userInfo?.user?.username;
         
         if(isLoggedIn){ // user is logged in
-            let { username }:any = data?.userInfo?.userInfo;
+            let { username }:any = data?.userInfo?.user;
             body = (
                 <Flex>
                     <Box mr={2}>
@@ -71,4 +73,4 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
     )
 }
 
-export default Navbar
+export default Navbar;

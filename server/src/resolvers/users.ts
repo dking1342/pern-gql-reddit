@@ -1,15 +1,27 @@
 import { MyContext } from "src/types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import argon2 from 'argon2';
-import { generateToken, validateInput } from "../utils/validation";
-import { Users } from "../entities/Users";
+import { registerValidation } from '../utils/registerValidation';
+import { loginValidation } from "../utils/loginValidation";
+import { generateToken } from '../utils/generateToken';
+import { User } from "../entities/User";
 import { isAuth } from "../utils/auth";
 
 // alternate way of adding argument
 @InputType()
 class UsernamePasswordInput {
     @Field()
+    email:string
+    @Field()
+    password:string
+}
+
+@InputType()
+class RegisterInput {
+    @Field()
     username:string
+    @Field()
+    email:string
     @Field()
     password:string
 }
@@ -27,59 +39,63 @@ class UserResponse{
     @Field(()=>[FieldError],{nullable:true})
     errors?:FieldError[]
 
-    @Field(()=>Users,{nullable:true})
-    user?:Users | null 
+    @Field(()=>User,{nullable:true})
+    user?:User | null 
 }
 
 @ObjectType()
-class UserInfoResponse{
+class UserInfoResponse {
     @Field(()=>[FieldError],{nullable:true})
-    errors?:FieldError[] | []
+    errors?:FieldError[]
 
-    @Field(()=>UserInfo,{nullable:true})
-    userInfo?:UserInfo | null
-}
-
-@ObjectType()
-class UserInfo{
-    @Field()
-    username:string
-    @Field()
-    iat:number
-    @Field()
-    exp:number
+    @Field(()=>User,{nullable:true})
+    user?:User | null 
 }
 
 @Resolver()
-export class UsersResolver{
+export class UserResolver{
+    // @Mutation(()=>Boolean)
+    // async forgotPassword(
+    //     @Arg('email') email:string,
+    //     @Ctx() {em}:MyContext
+    // ){
+    //     const user = await em.findOne(User,{email})
+    // }
+
     @Query(()=> UserInfoResponse,{nullable:true})
-    userInfo(
-        @Ctx() { req }: MyContext
-    ):UserInfoResponse{
+    async userInfo(
+        @Ctx() { em,req }: MyContext
+    ):Promise<UserInfoResponse>{
         let { auth, errors } = isAuth(req);
         if(Boolean(errors.length)){
             return{
-                errors,
-                userInfo:null
+                errors
             }
         } else {
-            return{
-                errors:[],
-                userInfo:{
-                    username:auth.username,
-                    iat:auth.iat,
-                    exp:auth.exp
+            try {
+                const user = await em.findOne(User,{username:auth.username});
+                return{
+                    user
                 }
+            } catch (error) {
+                return{
+                    errors:[
+                        {
+                            field:"email",
+                            message:"email address does not exists"
+                        },
+                    ],
+                };                
             }
         }
     }
 
     @Mutation(()=> UserResponse)
     async register(
-        @Arg('options',()=>UsernamePasswordInput) options: UsernamePasswordInput,
+        @Arg('options',()=>RegisterInput) options: RegisterInput,
         @Ctx() {em}: MyContext
     ):Promise<UserResponse>{
-        let { errorLog, valid } = validateInput(options);
+        let { errorLog, valid } = registerValidation(options);
 
         if(!valid){
             return{
@@ -88,7 +104,7 @@ export class UsersResolver{
         }
 
         const hashedPassword = await argon2.hash(options.password);
-        let user = em.create(Users,{username:options.username, password:hashedPassword});
+        let user = em.create(User,{username:options.username, email:options.email, password:hashedPassword});
         const token = generateToken(user!);
 
         try {
@@ -99,7 +115,7 @@ export class UsersResolver{
                     errors:[
                         {
                             field:"username",
-                            message:"username already exists"
+                            message:"username or email already exists"
                         }
                     ]
                 }
@@ -117,36 +133,53 @@ export class UsersResolver{
         @Arg('options',()=>UsernamePasswordInput) options: UsernamePasswordInput,
         @Ctx() {em}: MyContext
     ):Promise<UserResponse>{
-        const user = await em.findOne(Users,{username:options.username});
-
-        if(!user){
+        let { errorLog, valid: validation } = loginValidation(options);
+        if(!validation){
             return{
-                errors:[
-                    {
-                        field:"username",
-                        message:"username does not exists"
-                    },
-                ],
-            };
-        };
-        
-        const valid = await argon2.verify(user.password,options.password);
-        if(!valid){
-            return{
-                errors:[
-                    {
-                        field:"password",
-                        message:"password incorrect"
-                    }
-                ]
+                errors:errorLog,
+                user:null
             }
-        };
-        const token = generateToken(user!);
+        }
 
+        try {
+            const user = await em.findOne(User,{email:options.email});
+            if(!user){
+                return{
+                    errors:[
+                        {
+                            field:"email",
+                            message:"email address does not exists"
+                        },
+                    ],
+                };
+            };
 
-        return {
-            user:{...user,token}
-        };
+            const valid = await argon2.verify(user.password,options.password);
+            if(!valid){
+                return{
+                    errors:[
+                        {
+                            field:"password",
+                            message:"password incorrect"
+                        }
+                    ]
+                }
+            };
+            const token = generateToken(user!);
+            return {
+                user:{...user,token}
+            };
+        } catch (error) {
+            return { 
+                errors:[
+                    {
+                        field:"general",
+                        message:error.message
+                    }
+                ],
+                user:null
+            }
+        }
     }
 
     @Mutation(()=>Boolean)
@@ -154,7 +187,6 @@ export class UsersResolver{
         @Ctx(){req}:MyContext
     ){
         let { errors } = isAuth(req);
-        console.log(errors)
         return !Boolean(errors.length)
     }
 

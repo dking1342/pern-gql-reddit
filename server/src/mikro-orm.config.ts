@@ -2,7 +2,7 @@ import { __db_name__, __db_pw__, __db_type__, __db_user__, __prod__ } from "./co
 import {Post} from "./entities/Post";
 import { MikroORM } from '@mikro-orm/core';
 import path from 'path';
-import { Users } from "./entities/Users";
+import { User } from "./entities/User";
 
 // more advanced way of handling type by using Parameters
 export default {
@@ -10,7 +10,7 @@ export default {
         path: path.join(__dirname,"./migrations"), // path to the folder with migrations
         pattern: /^[\w-]+\d+\.[tj]s$/, // regex pattern for the migration files    
     },
-    entities:[Post,Users],
+    entities:[Post,User],
     dbName:__db_name__,
     user:__db_user__,
     password: __db_pw__,

@@ -23,7 +23,7 @@ const main = async () => {
         app.use(cors_1.default());
         const apolloServer = new apollo_server_express_1.ApolloServer({
             schema: await type_graphql_1.buildSchema({
-                resolvers: [post_1.PostResolver, users_1.UsersResolver],
+                resolvers: [post_1.PostResolver, users_1.UserResolver],
                 validate: false,
             }),
             context: (req) => ({ em: orm.em, req: req })

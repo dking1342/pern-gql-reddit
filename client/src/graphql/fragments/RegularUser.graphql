@@ -1,5 +1,6 @@
-fragment RegularUser on Users {
+fragment RegularUser on User {
     id
     username
+    email
     token
 }
