@@ -1,6 +1,6 @@
 import { Box } from '@chakra-ui/layout';
 import { Form, Formik } from 'formik'
-import React from 'react';
+import React, { useContext } from 'react';
 import Btn from '../components/Btn';
 import InputField from '../components/InputField';
 import Wrapper from '../components/Wrapper';
@@ -9,6 +9,7 @@ import { toErrorMap } from '../utils/toErrorMap';
 import { useRouter } from "next/router";
 import { withUrqlClient } from 'next-urql';
 import { createUrqlClient } from '../utils/createUrqlClient';
+import { UserContext } from '../context/userContext';
 
 interface registerProps {
 
@@ -16,6 +17,7 @@ interface registerProps {
 
 const Register: React.FC<registerProps> = ({}) => {
     const [_,register] = useRegisterMutation();
+    const { registerFn } = useContext(UserContext);
     const router = useRouter();
 
     return(
@@ -24,20 +26,9 @@ const Register: React.FC<registerProps> = ({}) => {
                 initialValues={{username:'',email:'',password:''}}
                 onSubmit={async(values,{setErrors})=>{
                     let response = await register(values);
-                    if(response.data?.register.errors){
-                        setErrors(toErrorMap(response.data.register.errors))
-                    }
-                    if(response.data?.register.user?.token){
-                        let userInfo = localStorage.getItem('userInfo');
-
-                        if(userInfo){
-                            localStorage.removeItem('userInfo')
-                            localStorage.setItem('userInfo',JSON.stringify(response.data.register.user));
-                        } else {
-                            localStorage.setItem('userInfo',JSON.stringify(response.data.register.user));
-                        }
-                        router.push('/');
-                    }
+                    registerFn(response);
+                    response.data?.register.errors && setErrors(toErrorMap(response.data.register.errors));
+                    response.data?.register.user?.token && router.push('/');
                 }}
             >
                 {({isSubmitting}) => (

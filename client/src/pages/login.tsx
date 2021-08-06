@@ -1,6 +1,6 @@
 import { Box } from '@chakra-ui/layout';
 import { Form, Formik } from 'formik'
-import React from 'react';
+import React, { useContext } from 'react';
 import Btn from '../components/Btn';
 import InputField from '../components/InputField';
 import Wrapper from '../components/Wrapper';
@@ -9,14 +9,15 @@ import { toErrorMap } from '../utils/toErrorMap';
 import { useRouter } from "next/router";
 import { withUrqlClient } from 'next-urql';
 import { createUrqlClient } from '../utils/createUrqlClient';
+import { UserContext } from '../context/userContext';
 
 interface loginProps {
 
 }
 
 const Login: React.FC<loginProps> = ({}) => {
-    const [_,login] = useLoginMutation();    
-
+    const [_,login] = useLoginMutation(); 
+    const { loginFn } = useContext(UserContext);   
     const router = useRouter();
 
     return(
@@ -25,20 +26,9 @@ const Login: React.FC<loginProps> = ({}) => {
                 initialValues={{email:'',password:''}}
                 onSubmit={async(values,{setErrors})=>{
                     let response = await login(values);
-                    if(response.data?.login.errors){
-                        setErrors(toErrorMap(response.data.login.errors))
-                    }
-                    if(response.data?.login.user?.token){
-                        let userInfo = localStorage.getItem('userInfo');
-
-                        if(userInfo){
-                            localStorage.removeItem('userInfo')
-                            localStorage.setItem('userInfo',JSON.stringify(response.data.login.user));
-                        } else {
-                            localStorage.setItem('userInfo',JSON.stringify(response.data.login.user));
-                        }
-                        router.push('/');
-                    }
+                    loginFn(response);
+                    response.data?.login.errors && setErrors(toErrorMap(response.data?.login.errors));
+                    response.data?.login.user?.token && router.push('/');
                 }}
             >
                 {({isSubmitting}) => (

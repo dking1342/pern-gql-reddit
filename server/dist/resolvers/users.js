@@ -95,8 +95,6 @@ UserInfoResponse = __decorate([
 let UserResolver = class UserResolver {
     async userInfo({ em, req }) {
         let { auth, errors } = auth_1.isAuth(req);
-        console.log('auth', auth);
-        console.log('req', req.headers);
         if (Boolean(errors.length)) {
             return {
                 errors

@@ -67,8 +67,6 @@ export class UserResolver{
         @Ctx() { em,req }: MyContext
     ):Promise<UserInfoResponse>{
         let { auth, errors } = isAuth(req);
-        console.log('auth',auth);
-        console.log('req',req.headers)
         if(Boolean(errors.length)){
             return{
                 errors

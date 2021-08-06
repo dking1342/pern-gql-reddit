@@ -1,10 +1,9 @@
 import { Box, Flex, Link } from '@chakra-ui/layout'
-import React from 'react'
+import React, { useContext } from 'react'
 import NextLink from 'next/link';
-import { useUserInfoQuery, useLogoutMutation } from '../generated/graphql';
+import { useLogoutMutation } from '../generated/graphql';
 import { Button } from '@chakra-ui/button';
-import { withUrqlClient } from 'next-urql';
-import { createUrqlClient } from '../utils/createUrqlClient';
+import { UserContext } from '../context/userContext';
 
 interface NavbarProps {
 
@@ -13,22 +12,16 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({}) => {
     const [{fetching:logoutFetching},logout] = useLogoutMutation();
-    const [{data,fetching}] = useUserInfoQuery();
-    
+    const { user,errors,logoutFn } = useContext(UserContext);    
     let body = null;
-
-    
 
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
+        logout().then(res=>logoutFn(res));
         logout();
     }
 
-    if(fetching){
-        // data is loading
-
-    } else if(Boolean(data?.userInfo?.errors?.length)){
-        // user is not logged in
+    if(Boolean(errors)){
         body = (
             <>
                 <NextLink href='/login'>
@@ -39,33 +32,20 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
                 </NextLink>
             </>
         )
-    } else {
-        let isLoggedIn = data?.userInfo?.user?.username;
-        
-        if(isLoggedIn){ // user is logged in
-            let { username }:any = data?.userInfo?.user;
-            body = (
-                <Flex>
-                    <Box mr={2}>
-                        {username}
-                    </Box>
-                    <Button isLoading={logoutFetching} variant='link' color="white" onClick={handleLogout}>
-                        logout
-                    </Button>
-                </Flex>
-            )
-        } else { // user is logged out
-            body = (
-                <>
-                    <NextLink href='/login'>
-                        <Link color="white" mr={2}>login</Link>
-                    </NextLink>
-                    <NextLink href='/register'>
-                        <Link color="white">register</Link>
-                    </NextLink>
-                </>
-            )    
-        }
+    }
+
+    if(Boolean(user)){
+        let { username }:any = user;
+        body = (
+            <Flex>
+                <Box mr={2}>
+                    {username}
+                </Box>
+                <Button isLoading={logoutFetching} variant='link' color="white" onClick={handleLogout}>
+                    logout
+                </Button>
+            </Flex>
+        )
     }
 
     return(
@@ -77,4 +57,4 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
     )
 }
 
-export default withUrqlClient(createUrqlClient,{ssr:false})(Navbar);
+export default Navbar;
