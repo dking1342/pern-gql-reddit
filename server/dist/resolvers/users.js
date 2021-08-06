@@ -95,6 +95,8 @@ UserInfoResponse = __decorate([
 let UserResolver = class UserResolver {
     async userInfo({ em, req }) {
         let { auth, errors } = auth_1.isAuth(req);
+        console.log('auth', auth);
+        console.log('req', req.headers);
         if (Boolean(errors.length)) {
             return {
                 errors
@@ -114,7 +116,7 @@ let UserResolver = class UserResolver {
                             field: "email",
                             message: "email address does not exists"
                         },
-                    ],
+                    ]
                 };
             }
         }
@@ -198,9 +200,46 @@ let UserResolver = class UserResolver {
             };
         }
     }
-    logout({ req }) {
-        let { errors } = auth_1.isAuth(req);
-        return !Boolean(errors.length);
+    async logout({ em, req }) {
+        let { auth, errors } = auth_1.isAuth(req);
+        if (errors.length) {
+            return {
+                errors,
+                user: null
+            };
+        }
+        try {
+            const user = await em.findOne(User_1.User, { username: auth.username });
+            if (!user) {
+                return {
+                    errors: [
+                        {
+                            field: "username",
+                            message: "username not found"
+                        }
+                    ],
+                    user: null
+                };
+            }
+            else {
+                return {
+                    errors: [],
+                    user
+                };
+            }
+        }
+        catch (error) {
+            console.log(error.message);
+            return {
+                errors: [
+                    {
+                        field: "general",
+                        message: error.message
+                    }
+                ],
+                user: null
+            };
+        }
     }
 };
 __decorate([
@@ -227,11 +266,11 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "login", null);
 __decorate([
-    type_graphql_1.Mutation(() => Boolean),
+    type_graphql_1.Mutation(() => UserResponse),
     __param(0, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "logout", null);
 UserResolver = __decorate([
     type_graphql_1.Resolver()

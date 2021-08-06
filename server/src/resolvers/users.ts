@@ -67,6 +67,8 @@ export class UserResolver{
         @Ctx() { em,req }: MyContext
     ):Promise<UserInfoResponse>{
         let { auth, errors } = isAuth(req);
+        console.log('auth',auth);
+        console.log('req',req.headers)
         if(Boolean(errors.length)){
             return{
                 errors
@@ -84,7 +86,7 @@ export class UserResolver{
                             field:"email",
                             message:"email address does not exists"
                         },
-                    ],
+                    ]
                 };                
             }
         }
@@ -182,12 +184,48 @@ export class UserResolver{
         }
     }
 
-    @Mutation(()=>Boolean)
-    logout(
-        @Ctx(){req}:MyContext
+    @Mutation(()=>UserResponse)
+    async logout(
+        @Ctx(){em,req}:MyContext
     ){
-        let { errors } = isAuth(req);
-        return !Boolean(errors.length)
+        let { auth, errors } = isAuth(req);
+
+        if(errors.length){
+            return{
+                errors,
+                user:null
+            }
+        }
+        try {
+            const user = await em.findOne(User,{username:auth.username});
+            if(!user){
+                return{
+                    errors:[
+                        {
+                            field:"username",
+                            message:"username not found"
+                        }
+                    ],
+                    user:null
+                }
+            } else {
+                return {
+                    errors:[],
+                    user
+                }
+            } 
+        } catch (error) {
+            console.log(error.message)
+            return {
+                errors:[
+                    {
+                        field:"general",
+                        message:error.message
+                    }
+                ],
+                user:null
+            }
+        }
     }
 
 

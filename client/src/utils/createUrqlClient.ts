@@ -11,8 +11,8 @@ function betterUpdateQuery<Result,Query>(
     result:any,
     fn:(r:Result,q:Query)=> Query
   ){
-    return cache.updateQuery(qi,data=>fn(result,data as any) as any);
-  }
+  return cache.updateQuery(qi,data=>fn(result,data as any) as any);
+};
 
 export const createUrqlClient = (ssrExchange:any) => ({
     url:'http://localhost:4000/graphql',
@@ -22,16 +22,29 @@ export const createUrqlClient = (ssrExchange:any) => ({
         updates:{
           Mutation:{
             login:(_result,_,cache,__) => {
+              console.log(_result)
               betterUpdateQuery<LoginMutation,UserInfoQuery>(
                 cache,
                 {query:UserInfoDocument},
                 _result,
-                (result:any,query)=>{
+                (result:any,_)=>{
                   if(result.login.errors){
-                    return query
+                    return {
+                      userInfo:{
+                          errors:[],
+                          user:null
+                      }
+                    }
                   } else {
                     return{
-                      userInfo:result.login.user
+                      userInfo:{
+                        errors:[],
+                        user:{
+                          id:result.login.user.id,
+                          username:result.login.user.username,
+                          email:result.login.user.email
+                        }
+                      }
                     }
                   }
                 }
@@ -54,17 +67,21 @@ export const createUrqlClient = (ssrExchange:any) => ({
               );
             },
             logout:(_result,_,cache,__) => {
-              // return{
-              //   _result
-              // }
               betterUpdateQuery<LogoutMutation,UserInfoQuery>(
                 cache,
                 {query:UserInfoDocument},
                 _result,
-                (_,query)=>{
-                  let q = query;
-                  q.userInfo!.user = null;
-                  return q;
+                ()=> {
+                  let { user } = _result.logout as any;
+                  cache.invalidate({
+                    __typename:"UserResponse",
+                    id:user.id
+                  });
+                  cache.invalidate({
+                    __typename:"UserInfoResponse",
+                    id:user.id
+                  });
+                  return {userInfo:null};
                 }
               );
             },
@@ -78,14 +95,11 @@ export const createUrqlClient = (ssrExchange:any) => ({
           authState,
           operation,
         }) => {
-          console.log('addauth',operation)
           // the token isn't in the auth state, return the operation without changes
           if (!authState) {
             return operation;
           }
           let { token }: any = authState;
-          console.log('authstate',authState);
-          console.log('operations',operation)
   
           // fetchOptions can be a function (See Client API) but you can simplify this based on usage
           const fetchOptions =
@@ -129,9 +143,7 @@ export const createUrqlClient = (ssrExchange:any) => ({
                   return { token };
                 }
                 return null;
-              } else {
-                return null;
-              }
+              } 
               
             } catch (error) {
               console.log('auth error',error.message);
@@ -144,3 +156,5 @@ export const createUrqlClient = (ssrExchange:any) => ({
     ],       
 
 })
+
+

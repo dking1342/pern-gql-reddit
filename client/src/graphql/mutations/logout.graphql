@@ -1,3 +1,13 @@
-mutation Logout {
-    logout
+mutation Logout{
+  logout{
+    errors {
+      field
+      message
+    }
+    user {
+      id
+      username
+      email
+    }
+  }
 }

@@ -1,19 +1,23 @@
 import { Box, Flex, Link } from '@chakra-ui/layout'
-import React, { } from 'react'
+import React from 'react'
 import NextLink from 'next/link';
 import { useUserInfoQuery, useLogoutMutation } from '../generated/graphql';
 import { Button } from '@chakra-ui/button';
-// import { isServer } from '../utils/isServer';
+import { withUrqlClient } from 'next-urql';
+import { createUrqlClient } from '../utils/createUrqlClient';
 
 interface NavbarProps {
 
 }
 
+
 const Navbar: React.FC<NavbarProps> = ({}) => {
     const [{fetching:logoutFetching},logout] = useLogoutMutation();
     const [{data,fetching}] = useUserInfoQuery();
+    
     let body = null;
-    console.log('nav data',data)
+
+    
 
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
@@ -73,4 +77,4 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
     )
 }
 
-export default Navbar;
+export default withUrqlClient(createUrqlClient,{ssr:false})(Navbar);
