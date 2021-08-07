@@ -1,6 +1,5 @@
 import { withUrqlClient } from 'next-urql';
 import React from 'react';
-// import Navbar from '../components/Navbar';
 import { usePostQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import dynamic from 'next/dynamic';

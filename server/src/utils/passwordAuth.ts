@@ -25,7 +25,7 @@ export const isPasswordAuth = (token:string):AuthResponse => {
             auth:null,
             errors:[
                 {
-                    field:"Auth Token",
+                    field:"token",
                     message:"Invalid token"
                 }
             ]

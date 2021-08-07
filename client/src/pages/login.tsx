@@ -10,6 +10,8 @@ import { useRouter } from "next/router";
 import { withUrqlClient } from 'next-urql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import { UserContext } from '../context/userContext';
+import { Flex, Link } from '@chakra-ui/react';
+import NextLink from 'next/link';
 
 interface loginProps {
 
@@ -49,6 +51,11 @@ const Login: React.FC<loginProps> = ({}) => {
                                 type="password"
                             />
                         </Box>
+                        <Flex mt={4} >
+                            <NextLink href="/forgot-password">
+                                <Link>Forgot Password?</Link>
+                            </NextLink>
+                        </Flex>
                         <Btn 
                             type="submit"
                             text="Login"

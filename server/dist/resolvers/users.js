@@ -96,7 +96,6 @@ UserInfoResponse = __decorate([
 ], UserInfoResponse);
 let UserResolver = class UserResolver {
     async changePassword(token, newPassword, { em }) {
-        console.log('back end works');
         if (newPassword.length <= 2) {
             return {
                 errors: [

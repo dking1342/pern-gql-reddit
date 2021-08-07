@@ -62,7 +62,6 @@ export class UserResolver{
         @Arg('newPassword') newPassword:string,
         @Ctx() { em }:MyContext
     ):Promise<UserResponse>{
-        console.log('back end works')
         if(newPassword.length <= 2){
             return {
                 errors :[

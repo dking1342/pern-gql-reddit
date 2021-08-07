@@ -20,7 +20,7 @@ const isPasswordAuth = (token) => {
             auth: null,
             errors: [
                 {
-                    field: "Auth Token",
+                    field: "token",
                     message: "Invalid token"
                 }
             ]

@@ -1,4 +1,3 @@
-import { Box } from '@chakra-ui/react';
 import { Formik, Form } from 'formik';
 import { NextPage } from 'next'
 import { useRouter } from 'next/router';
@@ -11,7 +10,8 @@ import { toErrorMap } from '../../utils/toErrorMap';
 import { createUrqlClient } from '../../utils/createUrqlClient';
 import { withUrqlClient } from 'next-urql';
 import { UserContext } from '../../context/userContext';
-
+import NextLink from 'next/link';
+import { Box, Flex, Link } from '@chakra-ui/layout'
 
 
 const ChangePassword: NextPage<{token:string}> = ({token}) => {
@@ -29,7 +29,6 @@ const ChangePassword: NextPage<{token:string}> = ({token}) => {
                         try {
                             let response = await changePassword(values);
                             changePasswordFn(response);
-                            console.log(response)
                             if(Boolean(response.data?.changePassword.errors)){
                                 const errorMap = toErrorMap(response.data!.changePassword.errors!);
                                 if('token' in errorMap){
@@ -56,7 +55,14 @@ const ChangePassword: NextPage<{token:string}> = ({token}) => {
                                     type="password"
                                 />
                             </Box>
-                            { tokenErr ? <Box color="red">{tokenErr}</Box> : null}
+                            { tokenErr ? (
+                                <Flex>
+                                    <Box color="red" mr={2}>{tokenErr}</Box>
+                                    <NextLink href="/forgot-password">
+                                        <Link>Get New Password</Link>
+                                    </NextLink>
+                                </Flex>
+                            ) : null}
                             <Btn 
                                 type="submit"
                                 text="Submit"
