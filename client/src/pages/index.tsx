@@ -1,18 +1,18 @@
 import { withUrqlClient } from 'next-urql';
 import React from 'react';
-import Navbar from '../components/Navbar';
+// import Navbar from '../components/Navbar';
 import { usePostQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
+import dynamic from 'next/dynamic';
 
-interface indexProps {
+const DynamicNavbar = dynamic(()=> import('../components/Navbar'),{ssr:false})
 
-}
-
-const Index: React.FC<indexProps> = ({}) => {
+const Index = ({}) => {
   const [{data}] = usePostQuery();
+
   return(
-    <>
-      <Navbar />
+    <main>
+      <DynamicNavbar />
       <div>
         reddit app
         <hr />
@@ -22,8 +22,8 @@ const Index: React.FC<indexProps> = ({}) => {
           data.posts.map(p=> <div key={p.id} >{p.title}</div>) 
         }
       </div>
-    </>
+    </main>
   )
 }
 
-export default withUrqlClient(createUrqlClient,{ssr:true})(Index)
+export default withUrqlClient(createUrqlClient,{ssr:false})(Index)

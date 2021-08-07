@@ -23,7 +23,6 @@ const isAuth = (context) => {
                 return {
                     auth: '',
                     errors: [
-                        ...errors,
                         {
                             field: "Auth Token",
                             message: "Invalid/Expired token"
@@ -36,7 +35,6 @@ const isAuth = (context) => {
             return {
                 auth: '',
                 errors: [
-                    ...errors,
                     {
                         field: "Auth Token",
                         message: "Authentication token must be formatted properly"
@@ -49,7 +47,6 @@ const isAuth = (context) => {
         return {
             auth: '',
             errors: [
-                ...errors,
                 {
                     field: "Auth Token",
                     message: "Correct header must be given"

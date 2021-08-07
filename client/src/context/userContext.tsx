@@ -1,5 +1,5 @@
 import React, { createContext, useReducer } from 'react';
-import { USER_ERROR, USER_LOGIN, USER_LOGOUT, USER_REGISTER } from './constants';
+import { USER_CHANGE_PW, USER_ERROR, USER_LOGIN, USER_LOGOUT, USER_REGISTER } from './constants';
 import { userReducer } from './reducers/userReducer';
 
 type errorsType = {
@@ -11,25 +11,42 @@ type userType = {
     id:number,
     username:string,
     email:string,
-    token?:string
+    token:string
 }
 
 type fnType = (payload:any) => void;
+// type userFn = (payload:any) => userType | null;
+let userInfo = ():userType | null => {
+    if(typeof window !== 'undefined'){
+        let isLocalStorage = Boolean(window.localStorage.getItem('userInfo'));
+        if(isLocalStorage){
+            return JSON.parse(localStorage.getItem('userInfo')!)
+        } else {
+            return null
+        }
+    } else {
+        return null;
+    }
+}
 
 export type initialStateType = {
     errors:errorsType[] | [],
-    user: userType | null,
+    user:userType | null,
     loginFn:fnType,
     registerFn:fnType,
     logoutFn:fnType,
+    changePasswordFn:fnType,
 }
+
+
 
 const initialState:initialStateType = {
     errors:[],
-    user:null,
+    user: userInfo(),
     loginFn:()=>{},
     registerFn:()=>{},
     logoutFn:()=>{},
+    changePasswordFn:()=>{},
 }
 
 export const UserContext = createContext(initialState);
@@ -84,19 +101,39 @@ export const UserProvider = (props:any) => {
     }
 
     const logoutFn:fnType = (payload) => {
+        localStorage.removeItem('userInfo');
         if(Boolean(payload.data.logout.errors)){
             dispatch({
                 type:USER_ERROR,
                 payload:payload.data.logout.errors
             })
         } else {
-            localStorage.removeItem('userInfo');
             dispatch({
                 type:USER_LOGOUT,
                 payload:payload.data.logout.user
             })
         }
+    }
 
+    const changePasswordFn:fnType = (payload) => {
+        if(Boolean(payload.data.changePassword.errors)){
+            dispatch({
+                type:USER_ERROR,
+                payload:payload.data.changePassword.errors
+            })
+        } else {
+            let userInfo = localStorage.getItem('userInfo');
+            if(userInfo){
+                localStorage.removeItem('userInfo')
+                localStorage.setItem('userInfo',JSON.stringify(payload.data.changePassword.user));
+            } else {
+                localStorage.setItem('userInfo',JSON.stringify(payload.data.changePassword.user));
+            }
+            dispatch({
+                type:USER_CHANGE_PW,
+                payload:payload.data.changePassword.user
+            })
+        }
     }
 
 
@@ -107,7 +144,8 @@ export const UserProvider = (props:any) => {
                 user,
                 loginFn,
                 registerFn,
-                logoutFn
+                logoutFn,
+                changePasswordFn
             }}
         >
             {props.children}

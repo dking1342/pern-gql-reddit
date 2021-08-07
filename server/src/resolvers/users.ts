@@ -6,6 +6,8 @@ import { loginValidation } from "../utils/loginValidation";
 import { generateToken } from '../utils/generateToken';
 import { User } from "../entities/User";
 import { isAuth } from "../utils/auth";
+import { sendEmail } from "../utils/sendMail";
+import { isPasswordAuth } from "../utils/passwordAuth";
 
 // alternate way of adding argument
 @InputType()
@@ -54,13 +56,85 @@ class UserInfoResponse {
 
 @Resolver()
 export class UserResolver{
-    // @Mutation(()=>Boolean)
-    // async forgotPassword(
-    //     @Arg('email') email:string,
-    //     @Ctx() {em}:MyContext
-    // ){
-    //     const user = await em.findOne(User,{email})
-    // }
+    @Mutation(()=>UserResponse)
+    async changePassword(
+        @Arg('token') token: string,
+        @Arg('newPassword') newPassword:string,
+        @Ctx() { em }:MyContext
+    ):Promise<UserResponse>{
+        console.log('back end works')
+        if(newPassword.length <= 2){
+            return {
+                errors :[
+                    {
+                        field:"newPassword",
+                        message:"Password must be at least two characters long"
+                    }
+                ]
+            }
+        }
+
+        let { auth, errors } = isPasswordAuth(token);
+        if(errors.length){
+            return{
+                errors
+            }
+        }
+        try {
+            const user = await em.findOne(User,{username:auth.username});
+            if(!user){
+                return{
+                    errors:[
+                        {
+                            field:"token",
+                            message:"invalid user"
+                        }
+                    ]
+                }
+            } 
+
+            user.password = await argon2.hash(newPassword);
+            await em.persistAndFlush(user);
+            let newToken = generateToken(user);
+
+            return {
+                errors:[],
+                user:{
+                    ...user,
+                    token:newToken
+                }
+            }
+        } catch (error) {
+            return{
+                errors:[
+                    {
+                        field:"token",
+                        message:error.message
+                    }
+                ]
+            }
+        }
+    }
+
+    @Mutation(()=>Boolean)
+    async forgotPassword(
+        @Arg('email') email:string,
+        @Ctx() {em}:MyContext
+    ){
+        const user = await em.findOne(User,{email})
+        if(!user){
+            // no user with email
+            return true;
+        }
+
+        const token = generateToken(user);
+
+        sendEmail(
+            email,
+            `<a href="http://localhost:3000/change-password/${token}">reset password</a>`
+        );
+        return true;
+    }
 
     @Query(()=> UserInfoResponse,{nullable:true})
     async userInfo(

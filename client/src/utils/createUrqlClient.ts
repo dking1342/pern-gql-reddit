@@ -1,6 +1,6 @@
 import { authExchange } from "@urql/exchange-auth";
 import { dedupExchange, makeOperation, fetchExchange } from "urql";
-import { LoginMutation, UserInfoQuery, UserInfoDocument, RegisterMutation, LogoutMutation } from "../generated/graphql";
+import { LoginMutation, UserInfoQuery, UserInfoDocument, RegisterMutation, LogoutMutation, ChangePasswordMutation } from "../generated/graphql";
 import { Cache, cacheExchange, QueryInput } from '@urql/exchange-graphcache'
 
 // helper function
@@ -71,6 +71,22 @@ export const createUrqlClient = (ssrExchange:any) => ({
                 }
               );
             },
+            changePassword:(_result,_,cache,__)=>{
+              betterUpdateQuery<ChangePasswordMutation,UserInfoQuery>(
+                cache,
+                {query:UserInfoDocument},
+                _result,
+                (result:any,query)=>{
+                  if(result.changePassword.errors){
+                    return query
+                  } else {
+                    return{
+                      userInfo:result.changePassword.user
+                    }
+                  }
+                }
+              )
+            },
           }
         },
 
@@ -122,10 +138,10 @@ export const createUrqlClient = (ssrExchange:any) => ({
         getAuth: async({ authState }) => {
             // for initial launch, fetch the auth state from storage (local storage, async storage etc)
             try {
-              if (!authState) {
-                const isUser = Boolean(localStorage.getItem('userInfo'));
+              if (!authState && typeof window !== 'undefined') {
+                const isUser = Boolean(window.localStorage.getItem('userInfo'));
                 if(isUser){
-                  const {token} = JSON.parse(localStorage.getItem('userInfo')!);
+                  const {token} = JSON.parse(window.localStorage.getItem('userInfo')!);
                   return { token };
                 }
                 return null;

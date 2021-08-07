@@ -7,7 +7,8 @@ type User = {
     updatedAt: Date,
     username: string,
     email:string,
-    password: string
+    password?: string
+    token?:string
 }
 
 export const generateToken = (user:User) => {

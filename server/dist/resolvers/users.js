@@ -23,6 +23,8 @@ const loginValidation_1 = require("../utils/loginValidation");
 const generateToken_1 = require("../utils/generateToken");
 const User_1 = require("../entities/User");
 const auth_1 = require("../utils/auth");
+const sendMail_1 = require("../utils/sendMail");
+const passwordAuth_1 = require("../utils/passwordAuth");
 let UsernamePasswordInput = class UsernamePasswordInput {
 };
 __decorate([
@@ -93,6 +95,64 @@ UserInfoResponse = __decorate([
     type_graphql_1.ObjectType()
 ], UserInfoResponse);
 let UserResolver = class UserResolver {
+    async changePassword(token, newPassword, { em }) {
+        console.log('back end works');
+        if (newPassword.length <= 2) {
+            return {
+                errors: [
+                    {
+                        field: "newPassword",
+                        message: "Password must be at least two characters long"
+                    }
+                ]
+            };
+        }
+        let { auth, errors } = passwordAuth_1.isPasswordAuth(token);
+        if (errors.length) {
+            return {
+                errors
+            };
+        }
+        try {
+            const user = await em.findOne(User_1.User, { username: auth.username });
+            if (!user) {
+                return {
+                    errors: [
+                        {
+                            field: "token",
+                            message: "invalid user"
+                        }
+                    ]
+                };
+            }
+            user.password = await argon2_1.default.hash(newPassword);
+            await em.persistAndFlush(user);
+            let newToken = generateToken_1.generateToken(user);
+            return {
+                errors: [],
+                user: Object.assign(Object.assign({}, user), { token: newToken })
+            };
+        }
+        catch (error) {
+            return {
+                errors: [
+                    {
+                        field: "token",
+                        message: error.message
+                    }
+                ]
+            };
+        }
+    }
+    async forgotPassword(email, { em }) {
+        const user = await em.findOne(User_1.User, { email });
+        if (!user) {
+            return true;
+        }
+        const token = generateToken_1.generateToken(user);
+        sendMail_1.sendEmail(email, `<a href="http://localhost:3000/change-password/${token}">reset password</a>`);
+        return true;
+    }
     async userInfo({ em, req }) {
         let { auth, errors } = auth_1.isAuth(req);
         if (Boolean(errors.length)) {
@@ -240,6 +300,23 @@ let UserResolver = class UserResolver {
         }
     }
 };
+__decorate([
+    type_graphql_1.Mutation(() => UserResponse),
+    __param(0, type_graphql_1.Arg('token')),
+    __param(1, type_graphql_1.Arg('newPassword')),
+    __param(2, type_graphql_1.Ctx()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", Promise)
+], UserResolver.prototype, "changePassword", null);
+__decorate([
+    type_graphql_1.Mutation(() => Boolean),
+    __param(0, type_graphql_1.Arg('email')),
+    __param(1, type_graphql_1.Ctx()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UserResolver.prototype, "forgotPassword", null);
 __decorate([
     type_graphql_1.Query(() => UserInfoResponse, { nullable: true }),
     __param(0, type_graphql_1.Ctx()),

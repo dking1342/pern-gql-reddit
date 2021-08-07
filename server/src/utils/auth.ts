@@ -30,7 +30,6 @@ export const isAuth = (context:any):AuthResponse => {
                 return{
                     auth:'',
                     errors:[
-                        ...errors,
                         {   
                             field:"Auth Token",
                             message: "Invalid/Expired token"
@@ -42,7 +41,6 @@ export const isAuth = (context:any):AuthResponse => {
             return{
                 auth:'',
                 errors: [
-                    ...errors,
                     {
                         field:"Auth Token",
                         message:"Authentication token must be formatted properly"
@@ -55,7 +53,6 @@ export const isAuth = (context:any):AuthResponse => {
         return{
             auth:'',
             errors: [
-                ...errors,
                 {
                     field:"Auth Token",
                     message:"Correct header must be given"

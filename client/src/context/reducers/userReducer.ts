@@ -1,4 +1,4 @@
-import { USER_ERROR, USER_LOGIN, USER_LOGOUT, USER_REGISTER } from "../constants";
+import { USER_CHANGE_PW, USER_ERROR, USER_LOGIN, USER_LOGOUT, USER_REGISTER } from "../constants";
 import { initialStateType } from "../userContext";
 
 export const userReducer = (state:initialStateType,action:any) => {
@@ -34,6 +34,17 @@ export const userReducer = (state:initialStateType,action:any) => {
                 ...state,
                 errors:[],
                 user:null
+            }
+        case USER_CHANGE_PW:
+            return{
+                ...state,
+                errors:[],
+                user:{
+                    id:action.payload.id,
+                    username:action.payload.username,
+                    email:action.payload.email,
+                    token:action.payload.token
+                }
             }
             
     
