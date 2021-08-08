@@ -1,14 +1,13 @@
-import { TypeormContext } from "src/types";
+import { MyContext } from "src/types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import argon2 from 'argon2';
 import { registerValidation } from '../utils/registerValidation';
 import { loginValidation } from "../utils/loginValidation";
 import { generateToken } from '../utils/generateToken';
-import { User } from "../entities/User";
+import { User } from "../entities/User-mikro";
 import { isAuth } from "../utils/auth";
 import { sendEmail } from "../utils/sendMail";
 import { isPasswordAuth } from "../utils/passwordAuth";
-import { getConnection } from "typeorm";
 
 // alternate way of adding argument
 @InputType()
@@ -38,28 +37,12 @@ class FieldError {
 }
 
 @ObjectType()
-class UserType {
-    @Field()
-    id:number;
-    @Field()
-    createdAt:string | Date;
-    @Field()
-    updatedAt:string | Date;
-    @Field()
-    username:string;
-    @Field()
-    email:string;
-    @Field()
-    token:string;
-}
-
-@ObjectType()
 class UserResponse{
     @Field(()=>[FieldError],{nullable:true})
     errors?:FieldError[]
 
     @Field(()=>User,{nullable:true})
-    user?:UserType | undefined 
+    user?:User | null 
 }
 
 @ObjectType()
@@ -68,7 +51,7 @@ class UserInfoResponse {
     errors?:FieldError[]
 
     @Field(()=>User,{nullable:true})
-    user?:User | undefined 
+    user?:User | null 
 }
 
 @Resolver()
@@ -77,6 +60,7 @@ export class UserResolver{
     async changePassword(
         @Arg('token') token: string,
         @Arg('newPassword') newPassword:string,
+        @Ctx() { em }:MyContext
     ):Promise<UserResponse>{
         if(newPassword.length <= 2){
             return {
@@ -96,7 +80,7 @@ export class UserResolver{
             }
         }
         try {
-            const user = await User.findOne({where:{username:auth.username}});
+            const user = await em.findOne(User,{username:auth.username});
             if(!user){
                 return{
                     errors:[
@@ -107,9 +91,9 @@ export class UserResolver{
                     ]
                 }
             } 
-            const userId = user.id;
-            newPassword = await argon2.hash(newPassword);
-            await User.update({id:userId},{password:newPassword});
+
+            user.password = await argon2.hash(newPassword);
+            await em.persistAndFlush(user);
             let newToken = generateToken(user);
 
             return {
@@ -134,8 +118,9 @@ export class UserResolver{
     @Mutation(()=>Boolean)
     async forgotPassword(
         @Arg('email') email:string,
-    ):Promise<boolean>{
-        const user = await User.findOne({where:{email}})
+        @Ctx() {em}:MyContext
+    ){
+        const user = await em.findOne(User,{email})
         if(!user){
             // no user with email
             return true;
@@ -152,7 +137,7 @@ export class UserResolver{
 
     @Query(()=> UserInfoResponse,{nullable:true})
     async userInfo(
-        @Ctx() { req }: TypeormContext
+        @Ctx() { em,req }: MyContext
     ):Promise<UserInfoResponse>{
         let { auth, errors } = isAuth(req);
         if(Boolean(errors.length)){
@@ -161,7 +146,7 @@ export class UserResolver{
             }
         } else {
             try {
-                const user = await User.findOne({where:{username:auth.username}});
+                const user = await em.findOne(User,{username:auth.username});
                 return{
                     user
                 }
@@ -181,35 +166,22 @@ export class UserResolver{
     @Mutation(()=> UserResponse)
     async register(
         @Arg('options',()=>RegisterInput) options: RegisterInput,
+        @Ctx() {em}: MyContext
     ):Promise<UserResponse>{
-
         let { errorLog, valid } = registerValidation(options);
-        
+
         if(!valid){
             return{
-                errors:errorLog,
-                user:undefined
+                errors:errorLog
             }
         }
-        
-        const hashedPassword = await argon2.hash(options.password);
-        try {
-            const result = 
-                await getConnection()
-                .createQueryBuilder()
-                .insert()
-                .into(User)
-                .values({
-                    username:options.username, 
-                    email:options.email, 
-                    password:hashedPassword
-                })
-                .returning('*')
-                .execute();
-            return {
-                user:result.raw
-            }
 
+        const hashedPassword = await argon2.hash(options.password);
+        let user = em.create(User,{username:options.username, email:options.email, password:hashedPassword});
+        const token = generateToken(user!);
+
+        try {
+            await em.persistAndFlush(user);  
         } catch (error) {
             if(error.code === '23505'){
                 return{
@@ -218,37 +190,32 @@ export class UserResolver{
                             field:"username",
                             message:"username or email already exists"
                         }
-                    ],
-                    user:undefined
-                }
-            } else {
-                return {
-                    errors:[
-                        {
-                            field:"username",
-                            message:error.message
-                        }
-                    ],
-                    user:undefined
+                    ]
                 }
             }
         }
+
+        return {
+            user:{...user,token},
+        };
+
     }
 
     @Mutation(()=> UserResponse)
     async login(
         @Arg('options',()=>UsernamePasswordInput) options: UsernamePasswordInput,
+        @Ctx() {em}: MyContext
     ):Promise<UserResponse>{
         let { errorLog, valid: validation } = loginValidation(options);
         if(!validation){
             return{
                 errors:errorLog,
-                user:undefined
+                user:null
             }
         }
 
         try {
-            const user = await User.findOne({where:{email:options.email}});
+            const user = await em.findOne(User,{email:options.email});
             if(!user){
                 return{
                     errors:[
@@ -283,25 +250,25 @@ export class UserResolver{
                         message:error.message
                     }
                 ],
-                user:undefined
+                user:null
             }
         }
     }
 
     @Mutation(()=>UserResponse)
     async logout(
-        @Ctx(){req}:TypeormContext
+        @Ctx(){em,req}:MyContext
     ){
         let { auth, errors } = isAuth(req);
 
         if(errors.length){
             return{
                 errors,
-                user:undefined
+                user:null
             }
         }
         try {
-            const user = await User.findOne({where:{username:auth.username}});
+            const user = await em.findOne(User,{username:auth.username});
             if(!user){
                 return{
                     errors:[
@@ -310,7 +277,7 @@ export class UserResolver{
                             message:"username not found"
                         }
                     ],
-                    user:undefined
+                    user:null
                 }
             } else {
                 return {
@@ -327,7 +294,7 @@ export class UserResolver{
                         message:error.message
                     }
                 ],
-                user:undefined
+                user:null
             }
         }
     }

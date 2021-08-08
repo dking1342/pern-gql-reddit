@@ -13,30 +13,33 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostResolver = void 0;
-const Post_1 = require("../entities/Post");
+const Post_mikro_1 = require("../entities/Post-mikro");
 const type_graphql_1 = require("type-graphql");
 let PostResolver = class PostResolver {
-    posts() {
-        return Post_1.Post.find();
+    posts({ em }) {
+        return em.find(Post_mikro_1.Post, {});
     }
-    postById(id) {
-        return Post_1.Post.findOne(id);
+    postById(id, { em }) {
+        return em.findOne(Post_mikro_1.Post, { id });
     }
-    async createPost(title) {
-        return Post_1.Post.create({ title }).save();
+    async createPost(title, { em }) {
+        const post = em.create(Post_mikro_1.Post, { title });
+        await em.persistAndFlush(post);
+        return post;
     }
-    async updatePost(id, title) {
-        const post = await Post_1.Post.findOne(id);
+    async updatePost(id, title, { em }) {
+        const post = await em.findOne(Post_mikro_1.Post, { id });
         if (!post)
-            return undefined;
+            return null;
         if (typeof title !== 'undefined') {
-            await Post_1.Post.update({ id }, { title });
+            post.title = title;
+            await em.persistAndFlush(post);
         }
         return post;
     }
-    async deletePost(id) {
+    async deletePost(id, { em }) {
         try {
-            await Post_1.Post.delete(id);
+            await em.nativeDelete(Post_mikro_1.Post, { id });
             return true;
         }
         catch (error) {
@@ -45,42 +48,47 @@ let PostResolver = class PostResolver {
     }
 };
 __decorate([
-    type_graphql_1.Query(() => [Post_1.Post]),
+    type_graphql_1.Query(() => [Post_mikro_1.Post]),
+    __param(0, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "posts", null);
 __decorate([
-    type_graphql_1.Query(() => Post_1.Post, { nullable: true }),
+    type_graphql_1.Query(() => Post_mikro_1.Post, { nullable: true }),
     __param(0, type_graphql_1.Arg('id', () => type_graphql_1.Int)),
+    __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "postById", null);
 __decorate([
-    type_graphql_1.Mutation(() => Post_1.Post),
+    type_graphql_1.Mutation(() => Post_mikro_1.Post),
     __param(0, type_graphql_1.Arg("title", () => String)),
+    __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "createPost", null);
 __decorate([
-    type_graphql_1.Mutation(() => Post_1.Post, { nullable: true }),
+    type_graphql_1.Mutation(() => Post_mikro_1.Post, { nullable: true }),
     __param(0, type_graphql_1.Arg("id", () => type_graphql_1.Int)),
     __param(1, type_graphql_1.Arg("title", () => String, { nullable: true })),
+    __param(2, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, String]),
+    __metadata("design:paramtypes", [Number, String, Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "updatePost", null);
 __decorate([
     type_graphql_1.Mutation(() => Boolean),
     __param(0, type_graphql_1.Arg("id", () => type_graphql_1.Int)),
+    __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "deletePost", null);
 PostResolver = __decorate([
     type_graphql_1.Resolver()
 ], PostResolver);
 exports.PostResolver = PostResolver;
-//# sourceMappingURL=post.js.map
+//# sourceMappingURL=post-mikro.js.map

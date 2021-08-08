@@ -6,3 +6,8 @@ export type MyContext = {
     req: Request,
     res: Response
 }
+
+export type TypeormContext = {
+    req: Request,
+    res: Response,
+}

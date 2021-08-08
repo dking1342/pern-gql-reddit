@@ -1,8 +1,8 @@
-import { __db_name__, __db_pw__, __db_type__, __db_user__, __prod__ } from "./constants";
-import {Post} from "./entities/Post";
+import { __db_name__, __db_pw__, __db_type__, __db_user__, __prod__ } from "../constants";
+import {Post} from "../entities/Post-mikro";
 import { MikroORM } from '@mikro-orm/core';
 import path from 'path';
-import { User } from "./entities/User";
+import { User } from "../entities/User-mikro";
 
 // more advanced way of handling type by using Parameters
 export default {
