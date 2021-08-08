@@ -42,9 +42,9 @@ class UserType {
     @Field()
     id:number;
     @Field()
-    createdAt:string | Date;
+    createdAt:Date;
     @Field()
-    updatedAt:string | Date;
+    updatedAt:Date;
     @Field()
     username:string;
     @Field()
@@ -56,10 +56,10 @@ class UserType {
 @ObjectType()
 class UserResponse{
     @Field(()=>[FieldError],{nullable:true})
-    errors?:FieldError[]
+    errors?:FieldError[] | [] | null
 
     @Field(()=>User,{nullable:true})
-    user?:UserType | undefined 
+    user?:UserType | undefined | null
 }
 
 @ObjectType()
@@ -68,7 +68,7 @@ class UserInfoResponse {
     errors?:FieldError[]
 
     @Field(()=>User,{nullable:true})
-    user?:User | undefined 
+    user?:User | undefined | null
 }
 
 @Resolver()
@@ -92,7 +92,7 @@ export class UserResolver{
         let { auth, errors } = isPasswordAuth(token);
         if(errors.length){
             return{
-                errors
+                errors,
             }
         }
         try {
@@ -104,7 +104,7 @@ export class UserResolver{
                             field:"token",
                             message:"invalid user"
                         }
-                    ]
+                    ],
                 }
             } 
             const userId = user.id;
@@ -113,7 +113,6 @@ export class UserResolver{
             let newToken = generateToken(user);
 
             return {
-                errors:[],
                 user:{
                     ...user,
                     token:newToken
@@ -126,7 +125,7 @@ export class UserResolver{
                         field:"token",
                         message:error.message
                     }
-                ]
+                ],
             }
         }
     }
@@ -157,7 +156,7 @@ export class UserResolver{
         let { auth, errors } = isAuth(req);
         if(Boolean(errors.length)){
             return{
-                errors
+                errors,
             }
         } else {
             try {
@@ -172,7 +171,7 @@ export class UserResolver{
                             field:"email",
                             message:"email address does not exists"
                         },
-                    ]
+                    ],
                 };                
             }
         }
@@ -188,7 +187,6 @@ export class UserResolver{
         if(!valid){
             return{
                 errors:errorLog,
-                user:undefined
             }
         }
         
@@ -206,8 +204,12 @@ export class UserResolver{
                 })
                 .returning('*')
                 .execute();
+            let token = generateToken(result.raw[0]);
             return {
-                user:result.raw
+                user:{
+                    ...result.raw[0],
+                    token
+                }
             }
 
         } catch (error) {
@@ -219,7 +221,6 @@ export class UserResolver{
                             message:"username or email already exists"
                         }
                     ],
-                    user:undefined
                 }
             } else {
                 return {
@@ -229,7 +230,6 @@ export class UserResolver{
                             message:error.message
                         }
                     ],
-                    user:undefined
                 }
             }
         }
@@ -243,7 +243,6 @@ export class UserResolver{
         if(!validation){
             return{
                 errors:errorLog,
-                user:undefined
             }
         }
 
@@ -268,7 +267,7 @@ export class UserResolver{
                             field:"password",
                             message:"password incorrect"
                         }
-                    ]
+                    ],
                 }
             };
             const token = generateToken(user!);
@@ -283,7 +282,6 @@ export class UserResolver{
                         message:error.message
                     }
                 ],
-                user:undefined
             }
         }
     }
@@ -297,7 +295,6 @@ export class UserResolver{
         if(errors.length){
             return{
                 errors,
-                user:undefined
             }
         }
         try {
@@ -310,11 +307,9 @@ export class UserResolver{
                             message:"username not found"
                         }
                     ],
-                    user:undefined
                 }
             } else {
                 return {
-                    errors:[],
                     user
                 }
             } 
@@ -327,7 +322,6 @@ export class UserResolver{
                         message:error.message
                     }
                 ],
-                user:undefined
             }
         }
     }

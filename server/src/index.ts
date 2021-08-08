@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import express from 'express';
 import dotenv from 'dotenv';
-import { PostResolver } from "./resolvers/post-mikro";
-import { UserResolver } from './resolvers/users-mikro';
+import { PostResolver } from "./resolvers/post";
+import { UserResolver } from './resolvers/users';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
 import cors from 'cors';

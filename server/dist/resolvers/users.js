@@ -77,11 +77,11 @@ __decorate([
 ], UserType.prototype, "id", void 0);
 __decorate([
     type_graphql_1.Field(),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], UserType.prototype, "createdAt", void 0);
 __decorate([
     type_graphql_1.Field(),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], UserType.prototype, "updatedAt", void 0);
 __decorate([
     type_graphql_1.Field(),
@@ -102,7 +102,7 @@ let UserResponse = class UserResponse {
 };
 __decorate([
     type_graphql_1.Field(() => [FieldError], { nullable: true }),
-    __metadata("design:type", Array)
+    __metadata("design:type", Object)
 ], UserResponse.prototype, "errors", void 0);
 __decorate([
     type_graphql_1.Field(() => User_1.User, { nullable: true }),
@@ -139,7 +139,7 @@ let UserResolver = class UserResolver {
         let { auth, errors } = passwordAuth_1.isPasswordAuth(token);
         if (errors.length) {
             return {
-                errors
+                errors,
             };
         }
         try {
@@ -151,7 +151,7 @@ let UserResolver = class UserResolver {
                             field: "token",
                             message: "invalid user"
                         }
-                    ]
+                    ],
                 };
             }
             const userId = user.id;
@@ -159,7 +159,6 @@ let UserResolver = class UserResolver {
             await User_1.User.update({ id: userId }, { password: newPassword });
             let newToken = generateToken_1.generateToken(user);
             return {
-                errors: [],
                 user: Object.assign(Object.assign({}, user), { token: newToken })
             };
         }
@@ -170,7 +169,7 @@ let UserResolver = class UserResolver {
                         field: "token",
                         message: error.message
                     }
-                ]
+                ],
             };
         }
     }
@@ -187,7 +186,7 @@ let UserResolver = class UserResolver {
         let { auth, errors } = auth_1.isAuth(req);
         if (Boolean(errors.length)) {
             return {
-                errors
+                errors,
             };
         }
         else {
@@ -204,7 +203,7 @@ let UserResolver = class UserResolver {
                             field: "email",
                             message: "email address does not exists"
                         },
-                    ]
+                    ],
                 };
             }
         }
@@ -214,7 +213,6 @@ let UserResolver = class UserResolver {
         if (!valid) {
             return {
                 errors: errorLog,
-                user: undefined
             };
         }
         const hashedPassword = await argon2_1.default.hash(options.password);
@@ -230,8 +228,9 @@ let UserResolver = class UserResolver {
             })
                 .returning('*')
                 .execute();
+            let token = generateToken_1.generateToken(result.raw[0]);
             return {
-                user: result.raw
+                user: Object.assign(Object.assign({}, result.raw[0]), { token })
             };
         }
         catch (error) {
@@ -243,7 +242,6 @@ let UserResolver = class UserResolver {
                             message: "username or email already exists"
                         }
                     ],
-                    user: undefined
                 };
             }
             else {
@@ -254,7 +252,6 @@ let UserResolver = class UserResolver {
                             message: error.message
                         }
                     ],
-                    user: undefined
                 };
             }
         }
@@ -264,7 +261,6 @@ let UserResolver = class UserResolver {
         if (!validation) {
             return {
                 errors: errorLog,
-                user: undefined
             };
         }
         try {
@@ -288,7 +284,7 @@ let UserResolver = class UserResolver {
                             field: "password",
                             message: "password incorrect"
                         }
-                    ]
+                    ],
                 };
             }
             ;
@@ -305,7 +301,6 @@ let UserResolver = class UserResolver {
                         message: error.message
                     }
                 ],
-                user: undefined
             };
         }
     }
@@ -314,7 +309,6 @@ let UserResolver = class UserResolver {
         if (errors.length) {
             return {
                 errors,
-                user: undefined
             };
         }
         try {
@@ -327,12 +321,10 @@ let UserResolver = class UserResolver {
                             message: "username not found"
                         }
                     ],
-                    user: undefined
                 };
             }
             else {
                 return {
-                    errors: [],
                     user
                 };
             }
@@ -346,7 +338,6 @@ let UserResolver = class UserResolver {
                         message: error.message
                     }
                 ],
-                user: undefined
             };
         }
     }
