@@ -10,3 +10,8 @@ export type TypeormContext = {
     req: Request,
     res: Response,
 }
+
+export type FieldError = {
+    field:string,
+    message:string
+}

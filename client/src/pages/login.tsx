@@ -13,11 +13,9 @@ import { UserContext } from '../context/userContext';
 import { Flex, Link } from '@chakra-ui/react';
 import NextLink from 'next/link';
 
-interface loginProps {
 
-}
 
-const Login: React.FC<loginProps> = ({}) => {
+const Login: React.FC<{}> = ({}) => {
     const [_,login] = useLoginMutation(); 
     const { loginFn } = useContext(UserContext);   
     const router = useRouter();

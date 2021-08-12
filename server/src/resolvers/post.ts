@@ -54,40 +54,41 @@ export class PostResolver{
             return {
                 errors,
             }
-        }
-
-        try {
-            const user = await User.findOne({where:{username:auth.username}});
-            if(!user){
+        } else {
+            try {
+                const user = await User.findOne({where:{username:auth.username}});
+                if(!user){
+                    return {
+                        errors:[
+                            {
+                                field:"username",
+                                message:"no user found"
+                            }
+                        ]
+                    }
+                }
+    
+                const createdPost = await Post.create({
+                    ...input,
+                    creatorId:user.id,            
+                }).save();
+    
+                return{
+                    post:createdPost
+                }
+            } catch (error) {
+                console.log('create post error',error.message);
                 return {
                     errors:[
                         {
-                            field:"username",
-                            message:"no user found"
+                            field:"post",
+                            message:"post was not created"
                         }
                     ]
-                }
+                };
             }
-
-            const createdPost = await Post.create({
-                ...input,
-                creatorId:user.id,            
-            }).save();
-
-            return{
-                post:createdPost
-            }
-        } catch (error) {
-            console.log('create post error',error.message);
-            return {
-                errors:[
-                    {
-                        field:"post",
-                        message:"post was not created"
-                    }
-                ]
-            };
         }
+
     }
 
     @Mutation(()=>Post,{nullable:true})

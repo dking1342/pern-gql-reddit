@@ -6,15 +6,11 @@ import { Button } from '@chakra-ui/button';
 import { UserContext } from '../context/userContext';
 
 
-interface NavbarProps {
-
-}
 
 
-const Navbar: React.FC<NavbarProps> = ({}) => {
+const Navbar: React.FC<{}> = ({}) => {
     const [{fetching:logoutFetching},logout] = useLogoutMutation();
     const { user,errors,logoutFn } = useContext(UserContext);
-
     const handleLogout = () => {
         logout().then(res=>logoutFn(res));
         logout();
@@ -35,6 +31,9 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
                         </>        
                     ) : (Boolean(user?.username)) ? (
                         <Flex>
+                            <NextLink href='/create-post'>
+                                <Link color="white" mr={3}>create post</Link>
+                            </NextLink>
                             <Box mr={2}>
                                 {user?.username ? user!.username : <div></div>}
                             </Box>

@@ -58,16 +58,20 @@ export const createUrqlClient = (ssrExchange:any) => ({
                 {query:UserInfoDocument},
                 _result,
                 ()=> {
-                  let { user } = _result.logout as any;
-                  cache.invalidate({
-                    __typename:"UserResponse",
-                    id:user.id
-                  });
-                  cache.invalidate({
-                    __typename:"UserInfoResponse",
-                    id:user.id
-                  });
-                  return {userInfo:null};
+                  let { user, errors } = _result.logout as any;
+                  if(Boolean(errors)){
+                    return{userInfo:null};
+                  } else {
+                    cache.invalidate({
+                      __typename:"UserResponse",
+                      id:user?.id || null
+                    });
+                    cache.invalidate({
+                      __typename:"UserInfoResponse",
+                      id:user.id
+                    });
+                    return {userInfo:null};
+                  }
                 }
               );
             },
