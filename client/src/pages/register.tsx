@@ -1,29 +1,25 @@
 import { Box } from '@chakra-ui/layout';
-import { Form, Formik } from 'formik'
-import React, { useContext, useEffect } from 'react';
+import { Flex } from '@chakra-ui/react';
+import { Form, Formik } from 'formik';
+import { withUrqlClient } from 'next-urql';
+import { useRouter } from "next/router";
+import React, { useContext } from 'react';
 import Btn from '../components/Btn';
 import InputField from '../components/InputField';
-import { useRegisterMutation } from '../generated/graphql';
-import { toErrorMap } from '../utils/toErrorMap';
-import { useRouter } from "next/router";
-import { withUrqlClient } from 'next-urql';
-import { createUrqlClient } from '../utils/createUrqlClient';
-import { UserContext } from '../context/userContext';
 import Layout from '../components/Layout';
-import { Flex } from '@chakra-ui/react';
+import { UserContext } from '../context/userContext';
+import { useRegisterMutation } from '../generated/graphql';
+import { createUrqlClient } from '../utils/createUrqlClient';
+import { toErrorMap } from '../utils/toErrorMap';
+import { useIsAuth } from '../utils/useIsAuth';
 
 
 
 const Register: React.FC<{}> = ({}) => {
     const [_,register] = useRegisterMutation();
-    const { user, registerFn } = useContext(UserContext);
     const router = useRouter();
-
-    useEffect(()=>{
-        if(Boolean(user)){
-            router.replace("/")
-        }
-    },[user])
+    const { registerFn } = useContext(UserContext);
+    let { user } = useIsAuth(router.route);
 
     if(Boolean(user)){
         return(

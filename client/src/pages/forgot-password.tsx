@@ -21,9 +21,6 @@ const ForgotPassword: React.FC<{}> = ({}) => {
                 onSubmit={async(values)=>{
                     await forgotPassword(values);
                     setComplete(true);
-                    // loginFn(response);
-                    // response.data?.forgotPassword && setErrors(toErrorMap(response.data?.forgotPassword));
-                    // response.data?.forgotPassword.user?.token && router.push('/');
                 }}
             >
                 {({isSubmitting}) => complete ? (

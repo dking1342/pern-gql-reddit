@@ -116,7 +116,7 @@ export const UserProvider = (props:any) => {
     }
 
     const changePasswordFn:fnType = (payload) => {
-        if(Boolean(payload.data.changePassword.errors.length)){
+        if(Boolean(payload.data.changePassword.errors)){
             dispatch({
                 type:USER_ERROR,
                 payload:payload.data.changePassword.errors

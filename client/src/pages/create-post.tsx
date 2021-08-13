@@ -1,16 +1,16 @@
-import { Box, Flex,Link } from '@chakra-ui/react';
-import { Formik, Form } from 'formik';
+import { Box, Flex, Link } from '@chakra-ui/react';
+import { Form, Formik } from 'formik';
 import { withUrqlClient } from 'next-urql';
+import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useState } from 'react';
 import Btn from '../components/Btn';
 import InputField from '../components/InputField';
 import Layout from '../components/Layout';
-import { UserContext } from '../context/userContext';
 import { useCreatePostMutation } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import { toErrorMap } from '../utils/toErrorMap';
-import NextLink from 'next/link';
+import { useIsAuth } from '../utils/useIsAuth';
 
 
 
@@ -18,13 +18,7 @@ const CreatePost: React.FC<{}> = ({}) => {
     const [_,createPost]=useCreatePostMutation();
     const [tokenErr,setTokenErr] = useState('');
     const router = useRouter();
-    const { user } = useContext(UserContext);
-
-    useEffect(()=>{
-        if(!Boolean(user)){
-            router.replace('/login');
-        }
-    },[user])
+    let { user } = useIsAuth(router.route);
 
 
     if(!Boolean(user)){

@@ -4,16 +4,18 @@ import NextLink from 'next/link';
 import { useLogoutMutation } from '../generated/graphql';
 import { Button } from '@chakra-ui/button';
 import { UserContext } from '../context/userContext';
-
+import { useRouter } from "next/router";
 
 
 
 const Navbar: React.FC<{}> = ({}) => {
     const [{fetching:logoutFetching},logout] = useLogoutMutation();
     const { user,errors,logoutFn } = useContext(UserContext);
+    const router = useRouter();
     const handleLogout = () => {
         logout().then(res=>logoutFn(res));
         logout();
+        router.push("/")
     }
 
     return(
