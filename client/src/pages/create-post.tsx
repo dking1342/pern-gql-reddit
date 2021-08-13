@@ -1,14 +1,16 @@
-import { Box, Flex } from '@chakra-ui/react';
+import { Box, Flex,Link } from '@chakra-ui/react';
 import { Formik, Form } from 'formik';
 import { withUrqlClient } from 'next-urql';
 import { useRouter } from 'next/router';
-import React, { useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import Btn from '../components/Btn';
 import InputField from '../components/InputField';
-import Wrapper from '../components/Wrapper';
+import Layout from '../components/Layout';
+import { UserContext } from '../context/userContext';
 import { useCreatePostMutation } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import { toErrorMap } from '../utils/toErrorMap';
+import NextLink from 'next/link';
 
 
 
@@ -16,9 +18,34 @@ const CreatePost: React.FC<{}> = ({}) => {
     const [_,createPost]=useCreatePostMutation();
     const [tokenErr,setTokenErr] = useState('');
     const router = useRouter();
+    const { user } = useContext(UserContext);
+
+    useEffect(()=>{
+        if(!Boolean(user)){
+            router.replace('/login');
+        }
+    },[user])
+
+
+    if(!Boolean(user)){
+        return(
+            <Layout variant="small">
+                <Flex>
+                    <Box>
+                        Loading...
+                    </Box>
+                    <Box>
+                        <NextLink href='/login'>
+                            <Link color="teal" variant="button" mr={2}>Go To Login</Link>
+                        </NextLink>
+                    </Box>
+                </Flex>
+            </Layout>
+        )
+    }
 
     return(
-        <Wrapper variant="small">
+        <Layout variant="small">
             <Formik
                 initialValues={{ title:'',text:''}}
                 onSubmit={async(values,{setErrors})=>{
@@ -28,6 +55,7 @@ const CreatePost: React.FC<{}> = ({}) => {
                             const errorMap = toErrorMap(response.data!.createPost.errors)
                             if('token' in errorMap){
                                 setTokenErr('Please log in to create a post');
+                                setTimeout(()=> router.push('/login'),2000)
                             }
                             setErrors(errorMap);
                         }
@@ -76,7 +104,7 @@ const CreatePost: React.FC<{}> = ({}) => {
                     </Form>
                 )}
             </Formik>
-        </Wrapper>
+        </Layout>
     )
 };
 

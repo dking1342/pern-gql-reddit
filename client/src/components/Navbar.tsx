@@ -17,11 +17,14 @@ const Navbar: React.FC<{}> = ({}) => {
     }
 
     return(
-        <Flex bg="cyan.900" p={4}>
+        <Flex bg="cyan.900" p={4} position='sticky' top={0} zIndex={1}>
             <Box ml={"auto"}>
                 {
                     (Boolean(errors.length)) ? (
                         <>
+                            <NextLink href='/'>
+                                <Link color="white" mr={2}>home</Link>
+                            </NextLink>
                             <NextLink href='/login'>
                                 <Link color="white" mr={2}>login</Link>
                             </NextLink>
@@ -31,10 +34,13 @@ const Navbar: React.FC<{}> = ({}) => {
                         </>        
                     ) : (Boolean(user?.username)) ? (
                         <Flex>
+                            <NextLink href='/'>
+                                <Link color="white" mr={3}>home</Link>
+                            </NextLink>
                             <NextLink href='/create-post'>
                                 <Link color="white" mr={3}>create post</Link>
                             </NextLink>
-                            <Box mr={2}>
+                            <Box mr={2} color="white">
                                 {user?.username ? user!.username : <div></div>}
                             </Box>
                             <Button isLoading={logoutFetching} variant='link' color="white" onClick={handleLogout}>
@@ -43,6 +49,9 @@ const Navbar: React.FC<{}> = ({}) => {
                         </Flex>
                     ) : (
                         <>
+                            <NextLink href='/'>
+                                <Link color="white" mr={2}>home</Link>
+                            </NextLink>
                             <NextLink href='/login'>
                                 <Link color="white" mr={2}>login</Link>
                             </NextLink>
