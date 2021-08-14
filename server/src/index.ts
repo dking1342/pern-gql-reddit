@@ -21,8 +21,9 @@ const main = async () => {
         // await orm.getMigrator().up();
 
         // database init with typeorm
-        const conn = await createConnection(typeormConfig)
-        console.log(conn);
+        const conn = await createConnection(typeormConfig);
+        console.log(conn.options);
+        // await conn.runMigrations();
         // express server init
         const app = express();
         const PORT = process.env.PORT;

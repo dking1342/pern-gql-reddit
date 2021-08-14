@@ -17,7 +17,7 @@ dotenv_1.default.config();
 const main = async () => {
     try {
         const conn = await typeorm_1.createConnection(typeorm_2.default);
-        console.log(conn);
+        console.log(conn.options);
         const app = express_1.default();
         const PORT = process.env.PORT;
         app.use(cors_1.default());

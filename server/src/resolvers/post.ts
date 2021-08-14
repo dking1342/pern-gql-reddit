@@ -1,8 +1,9 @@
 import {Post} from "../entities/Post";
-import { Arg, Ctx, Field, InputType, Int, Mutation, ObjectType, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Field, FieldResolver, InputType, Int, Mutation, ObjectType, Query, Resolver, Root } from "type-graphql";
 import { TypeormContext } from "src/types";
 import { isAuth } from "../utils/auth";
 import { User } from "../entities/User";
+import { getConnection } from "typeorm";
 
 @InputType()
 class PostInput {
@@ -29,11 +30,30 @@ class PostResponse{
     post?:Post | null
 }
 
-@Resolver()
+@Resolver(Post)
 export class PostResolver{
+    @FieldResolver(()=>String)
+    textSnippet(
+        @Root() root:Post
+    ){
+        return root.text.slice(0,50);        
+    }
     @Query(()=> [Post])
-    async posts(): Promise<Post[]>{
-        return await Post.find({})
+    async posts(
+        @Arg('limit',()=>Int) limit:number,
+        // @Arg('offset') offset:number,
+        @Arg('cursor',()=>String,{nullable:true}) cursor:string | null,
+    ): Promise<Post[]>{
+        const realLimit = Math.min(50,limit);
+        const qb = getConnection()
+            .getRepository(Post)
+            .createQueryBuilder("posts")
+            .orderBy('"createdAt"','DESC')
+            .take(realLimit);
+        if(cursor){
+            qb.where('"createdAt" < :cursor',{ cursor: new Date(Number(cursor)) })
+        }
+        return qb.getMany();
     }
 
     @Query(()=>Post,{nullable:true})
