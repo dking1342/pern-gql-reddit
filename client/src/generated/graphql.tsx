@@ -69,6 +69,12 @@ export type MutationLoginArgs = {
   options: UsernamePasswordInput;
 };
 
+export type PaginatedPost = {
+  __typename?: 'PaginatedPost';
+  posts: Array<Post>;
+  hasMore: Scalars['Boolean'];
+};
+
 export type Post = {
   __typename?: 'Post';
   id: Scalars['Int'];
@@ -100,7 +106,7 @@ export type PostResponse = {
 
 export type Query = {
   __typename?: 'Query';
-  posts: Array<Post>;
+  posts: PaginatedPost;
   postById?: Maybe<Post>;
   userInfo?: Maybe<UserInfoResponse>;
 };
@@ -285,10 +291,14 @@ export type PostsQueryVariables = Exact<{
 
 export type PostsQuery = (
   { __typename?: 'Query' }
-  & { posts: Array<(
-    { __typename?: 'Post' }
-    & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'textSnippet' | 'creatorId'>
-  )> }
+  & { posts: (
+    { __typename?: 'PaginatedPost' }
+    & Pick<PaginatedPost, 'hasMore'>
+    & { posts: Array<(
+      { __typename?: 'Post' }
+      & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'textSnippet' | 'creatorId'>
+    )> }
+  ) }
 );
 
 export type UserInfoQueryVariables = Exact<{ [key: string]: never; }>;
@@ -435,12 +445,15 @@ export function useRegisterMutation() {
 export const PostsDocument = gql`
     query Posts($limit: Int!, $cursor: String) {
   posts(limit: $limit, cursor: $cursor) {
-    id
-    createdAt
-    updatedAt
-    title
-    textSnippet
-    creatorId
+    hasMore
+    posts {
+      id
+      createdAt
+      updatedAt
+      title
+      textSnippet
+      creatorId
+    }
   }
 }
     `;

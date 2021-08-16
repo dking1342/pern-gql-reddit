@@ -1,14 +1,14 @@
+import argon2 from 'argon2';
 import { TypeormContext } from "src/types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
-import argon2 from 'argon2';
-import { registerValidation } from '../utils/registerValidation';
-import { loginValidation } from "../utils/loginValidation";
-import { generateToken } from '../utils/generateToken';
+import { getConnection } from "typeorm";
 import { User } from "../entities/User";
 import { isAuth } from "../utils/auth";
-import { sendEmail } from "../utils/sendMail";
+import { generateToken } from '../utils/generateToken';
+import { loginValidation } from "../utils/loginValidation";
 import { isPasswordAuth } from "../utils/passwordAuth";
-import { getConnection } from "typeorm";
+import { registerValidation } from '../utils/registerValidation';
+import { sendEmail } from "../utils/sendMail";
 
 // alternate way of adding argument
 @InputType()
@@ -71,8 +71,17 @@ class UserInfoResponse {
     user?:User | undefined | null
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver{
+    // @FieldResolver(()=>String)
+    // email(
+    //     @Root() user: User, 
+    //     @Ctx() {req}:TypeormContext
+    // ){
+    //     let { auth, errors} = isAuth(req);
+    //     console.log('user resolver', user);
+    //     console.log('authUser',auth, errors)
+    // }
     @Mutation(()=>UserResponse)
     async changePassword(
         @Arg('token') token: string,

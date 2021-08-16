@@ -69,8 +69,8 @@ const Navbar: React.FC<{}> = ({}) => {
     const { isOpen, onToggle } = useDisclosure();
     
     const DesktopNav = () => {
-      const linkColor = useColorModeValue('gray.600', 'gray.200');
-      const linkHoverColor = useColorModeValue('gray.800', 'white');
+      const linkColor = useColorModeValue('gray.900', 'gray.500');
+      const linkHoverColor = useColorModeValue('gray.700', 'white');
       const popoverContentBgColor = useColorModeValue('white', 'gray.800');
     
       return (
@@ -296,7 +296,7 @@ const Navbar: React.FC<{}> = ({}) => {
     return (
         <Box position='sticky' top={0} zIndex={1}>
           <Flex
-            bg={useColorModeValue('cyan.400', 'gray.400')}
+            bg={useColorModeValue('gray.400', 'gray.900')}
             color={useColorModeValue('white', 'white')}
             minH={'60px'}
             py={{ base: 2 }}

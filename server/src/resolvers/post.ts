@@ -30,6 +30,14 @@ class PostResponse{
     post?:Post | null
 }
 
+@ObjectType()
+class PaginatedPost{
+    @Field(()=>[Post])
+    posts:Post[]
+    @Field()
+    hasMore:boolean
+}
+
 @Resolver(Post)
 export class PostResolver{
     @FieldResolver(()=>String)
@@ -38,22 +46,54 @@ export class PostResolver{
     ){
         return root.text.slice(0,50);        
     }
-    @Query(()=> [Post])
+    @Query(()=> PaginatedPost)
     async posts(
         @Arg('limit',()=>Int) limit:number,
         // @Arg('offset') offset:number,
         @Arg('cursor',()=>String,{nullable:true}) cursor:string | null,
-    ): Promise<Post[]>{
-        const realLimit = Math.min(50,limit);
-        const qb = getConnection()
-            .getRepository(Post)
-            .createQueryBuilder("posts")
-            .orderBy('"createdAt"','DESC')
-            .take(realLimit);
+        // @Info() info:any,
+    ): Promise<PaginatedPost>{
+        const realLimit = Math.min(50,limit) + 1;
+        const realLimitPlusOne = realLimit + 1;
+
+        const replacements:any[] = [realLimitPlusOne,]
+
         if(cursor){
-            qb.where('"createdAt" < :cursor',{ cursor: new Date(Number(cursor)) })
+            replacements.push(new Date(Number(cursor)));
         }
-        return qb.getMany();
+        //re
+        const posts = await getConnection().query(`
+            SELECT 
+            post.*, 
+            json_build_object(
+                'id',public.user.id,
+                'username',public.user.username,
+                'email',public.user.email
+                ) creator
+            FROM post
+            ${cursor ? `WHERE post."createdAt" < $2` : ''}
+            INNER JOIN public.user ON public.user.id = post.creator_id
+            ORDER BY post."createdAt" DESC
+            LIMIT $1
+        `,replacements);
+
+
+
+        // const qb = getConnection()
+            // .getRepository(Post)
+            // .createQueryBuilder("posts")
+            // .innerJoinAndSelect("posts.creator","user",'user.id = posts."creator_id"')
+            // .orderBy('posts."createdAt"','DESC')
+            // .take(realLimitPlusOne);
+        // if(cursor){
+        //     qb.where('posts."createdAt" < :cursor',{ cursor: new Date(Number(cursor)) })
+        // }
+        // const posts = await qb.getMany();
+
+        return {
+            hasMore:posts.length === realLimitPlusOne,
+            posts:posts.slice(0,realLimit), 
+        };
     }
 
     @Query(()=>Post,{nullable:true})
@@ -90,7 +130,7 @@ export class PostResolver{
     
                 const createdPost = await Post.create({
                     ...input,
-                    creatorId:user.id,            
+                    creator_id:user.id,            
                 }).save();
     
                 return{

@@ -16,16 +16,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
-const type_graphql_1 = require("type-graphql");
 const argon2_1 = __importDefault(require("argon2"));
-const registerValidation_1 = require("../utils/registerValidation");
-const loginValidation_1 = require("../utils/loginValidation");
-const generateToken_1 = require("../utils/generateToken");
+const type_graphql_1 = require("type-graphql");
+const typeorm_1 = require("typeorm");
 const User_1 = require("../entities/User");
 const auth_1 = require("../utils/auth");
-const sendMail_1 = require("../utils/sendMail");
+const generateToken_1 = require("../utils/generateToken");
+const loginValidation_1 = require("../utils/loginValidation");
 const passwordAuth_1 = require("../utils/passwordAuth");
-const typeorm_1 = require("typeorm");
+const registerValidation_1 = require("../utils/registerValidation");
+const sendMail_1 = require("../utils/sendMail");
 let UsernamePasswordInput = class UsernamePasswordInput {
 };
 __decorate([
@@ -386,7 +386,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "logout", null);
 UserResolver = __decorate([
-    type_graphql_1.Resolver()
+    type_graphql_1.Resolver(User_1.User)
 ], UserResolver);
 exports.UserResolver = UserResolver;
 //# sourceMappingURL=users.js.map
