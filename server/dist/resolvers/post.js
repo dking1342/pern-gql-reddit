@@ -74,27 +74,79 @@ let PostResolver = class PostResolver {
     textSnippet(root) {
         return root.text.slice(0, 50);
     }
+    async vote(postId, value, { req }) {
+        let { auth, errors } = auth_1.isAuth(req);
+        if (Boolean(errors.length)) {
+            errors.forEach(err => {
+                throw new Error(err.message);
+            });
+            return false;
+        }
+        const { id } = auth;
+        const isUpdoot = value !== -1;
+        const realValue = isUpdoot ? 1 : -1;
+        let err = '';
+        try {
+            await typeorm_1.getConnection().query(`
+                START TRANSACTION;
+
+                INSERT INTO updoot(
+                    user_id,
+                    post_id,
+                    value
+                )
+                VALUES (
+                    ${id},
+                    ${postId},
+                    ${realValue}
+                );
+
+                UPDATE post
+                SET points = points + ${realValue}
+                WHERE id = ${postId};
+
+                COMMIT;
+            `);
+        }
+        catch (error) {
+            err = error.message;
+            console.log('vote error', error.message);
+        }
+        if (Boolean(err)) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
     async posts(limit, cursor) {
         const realLimit = Math.min(50, limit) + 1;
         const realLimitPlusOne = realLimit + 1;
         const replacements = [realLimitPlusOne,];
         if (cursor) {
-            replacements.push(new Date(Number(cursor)));
+            replacements.push(new Date(parseInt(cursor)));
         }
-        const posts = await typeorm_1.getConnection().query(`
-            SELECT 
-            post.*, 
-            json_build_object(
-                'id',public.user.id,
-                'username',public.user.username,
-                'email',public.user.email
-                ) creator
-            FROM post
-            ${cursor ? `WHERE post."createdAt" < $2` : ''}
-            INNER JOIN public.user ON public.user.id = post.creator_id
-            ORDER BY post."createdAt" DESC
-            LIMIT $1
-        `, replacements);
+        console.log('replacements', replacements);
+        let posts = [];
+        try {
+            posts = await typeorm_1.getConnection().query(`
+                SELECT 
+                    post.*,
+                    json_build_object(
+                        'id',public.user.id,
+                        'username',public.user.username,
+                        'email',public.user.email
+                    ) creator
+                FROM post
+                INNER JOIN public.user ON public.user.id = post.creator_id
+                ${cursor ? `WHERE post."createdAt" < $2` : ''}
+                ORDER BY post."createdAt" DESC
+                LIMIT $1
+            `, replacements);
+        }
+        catch (error) {
+            console.log('posts error', error.message);
+        }
         return {
             hasMore: posts.length === realLimitPlusOne,
             posts: posts.slice(0, realLimit),
@@ -167,6 +219,15 @@ __decorate([
     __metadata("design:paramtypes", [Post_1.Post]),
     __metadata("design:returntype", void 0)
 ], PostResolver.prototype, "textSnippet", null);
+__decorate([
+    type_graphql_1.Mutation(() => Boolean),
+    __param(0, type_graphql_1.Arg('postId', () => type_graphql_1.Int)),
+    __param(1, type_graphql_1.Arg('value', () => type_graphql_1.Int)),
+    __param(2, type_graphql_1.Ctx()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, Object]),
+    __metadata("design:returntype", Promise)
+], PostResolver.prototype, "vote", null);
 __decorate([
     type_graphql_1.Query(() => PaginatedPost),
     __param(0, type_graphql_1.Arg('limit', () => type_graphql_1.Int)),

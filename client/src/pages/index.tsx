@@ -7,7 +7,7 @@ import { createUrqlClient } from '../utils/createUrqlClient';
 
 const Index = ({}) => {
   const [variables,setVariables] = useState({
-    limit:10,
+    limit:15,
     cursor:null as string | null
   })
   const [{data, fetching,stale}] = usePostsQuery({
@@ -35,7 +35,10 @@ const Index = ({}) => {
                   data!.posts.posts.map((p)=> (
                     <Box p={5} shadow="md" borderWidth="1px" key={p.id}>
                       <Heading fontSize="xl">{p.title}</Heading>
+                      <Text mt={2}>posted by: {p.creator.username}</Text>
                       <Text mt={4}>{p.textSnippet}</Text>
+                      <Text mt={4}>Points: {p.points}</Text>
+                      
                     </Box>
                   ))
                 }
@@ -50,7 +53,7 @@ const Index = ({}) => {
                   m='auto' 
                   my={8} 
                   backgroundColor={"gray.800"} color={"white"}
-                  onClick={()=> setVariables({limit:variables.limit,cursor:data.posts.posts[data.posts.posts.length - 1].createdAt})} 
+                  onClick={()=>setVariables({limit:variables.limit,cursor:data.posts.posts[data.posts.posts.length - 1].createdAt})}
                 >
                   load more
                 </Button>

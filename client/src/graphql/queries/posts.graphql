@@ -7,7 +7,12 @@ query Posts($limit:Int!,$cursor:String){
       updatedAt
       title
       textSnippet
-      creatorId
+      creator_id
+      points
+      creator{
+        id
+        username
+      }
     }
   }
 }

@@ -22,6 +22,7 @@ export type FieldError = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  vote: Scalars['Boolean'];
   createPost: PostResponse;
   updatePost?: Maybe<Post>;
   deletePost: Scalars['Boolean'];
@@ -30,6 +31,12 @@ export type Mutation = {
   register: UserResponse;
   login: UserResponse;
   logout: UserResponse;
+};
+
+
+export type MutationVoteArgs = {
+  value: Scalars['Int'];
+  postId: Scalars['Int'];
 };
 
 
@@ -81,7 +88,8 @@ export type Post = {
   title: Scalars['String'];
   text: Scalars['String'];
   points: Scalars['Float'];
-  creatorId: Scalars['Float'];
+  creator_id: Scalars['Float'];
+  creator: User;
   createdAt: Scalars['String'];
   updatedAt: Scalars['String'];
   textSnippet: Scalars['String'];
@@ -210,7 +218,7 @@ export type CreatePostMutation = (
       & Pick<PostError, 'field' | 'message'>
     )>>, post?: Maybe<(
       { __typename?: 'Post' }
-      & Pick<Post, 'id' | 'title' | 'text' | 'creatorId'>
+      & Pick<Post, 'id' | 'title' | 'text' | 'creator_id'>
     )> }
   ) }
 );
@@ -296,7 +304,11 @@ export type PostsQuery = (
     & Pick<PaginatedPost, 'hasMore'>
     & { posts: Array<(
       { __typename?: 'Post' }
-      & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'textSnippet' | 'creatorId'>
+      & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'textSnippet' | 'creator_id' | 'points'>
+      & { creator: (
+        { __typename?: 'User' }
+        & Pick<User, 'id' | 'username'>
+      ) }
     )> }
   ) }
 );
@@ -371,7 +383,7 @@ export const CreatePostDocument = gql`
       id
       title
       text
-      creatorId
+      creator_id
     }
   }
 }
@@ -452,7 +464,12 @@ export const PostsDocument = gql`
       updatedAt
       title
       textSnippet
-      creatorId
+      creator_id
+      points
+      creator {
+        id
+        username
+      }
     }
   }
 }

@@ -46,6 +46,58 @@ export class PostResolver{
     ){
         return root.text.slice(0,50);        
     }
+
+    @Mutation(()=>Boolean)
+    async vote(
+        @Arg('postId',()=>Int) postId: number,
+        @Arg('value',()=>Int) value: number,        
+        @Ctx() {req}:TypeormContext
+    ){
+        let { auth, errors } = isAuth(req);
+        
+        if(Boolean(errors.length)){
+            errors.forEach(err=>{
+                throw new Error(err.message)
+            })
+            return false;
+        }
+        const { id } = auth;
+        const isUpdoot = value !== -1;
+        const realValue = isUpdoot ? 1 : -1; 
+        let err='';
+
+        try {
+            await getConnection().query(`
+                START TRANSACTION;
+
+                INSERT INTO updoot(
+                    user_id,
+                    post_id,
+                    value
+                )
+                VALUES (
+                    ${id},
+                    ${postId},
+                    ${realValue}
+                );
+
+                UPDATE post
+                SET points = points + ${realValue}
+                WHERE id = ${postId};
+
+                COMMIT;
+            `);            
+        } catch (error) {
+            err = error.message;
+            console.log('vote error',error.message)
+        }
+        if(Boolean(err)){
+            return false;
+        } else {
+            return true
+        }
+    }
+
     @Query(()=> PaginatedPost)
     async posts(
         @Arg('limit',()=>Int) limit:number,
@@ -55,40 +107,31 @@ export class PostResolver{
     ): Promise<PaginatedPost>{
         const realLimit = Math.min(50,limit) + 1;
         const realLimitPlusOne = realLimit + 1;
-
         const replacements:any[] = [realLimitPlusOne,]
-
         if(cursor){
-            replacements.push(new Date(Number(cursor)));
+            replacements.push(new Date(parseInt(cursor)));
         }
-        //re
-        const posts = await getConnection().query(`
-            SELECT 
-            post.*, 
-            json_build_object(
-                'id',public.user.id,
-                'username',public.user.username,
-                'email',public.user.email
-                ) creator
-            FROM post
-            ${cursor ? `WHERE post."createdAt" < $2` : ''}
-            INNER JOIN public.user ON public.user.id = post.creator_id
-            ORDER BY post."createdAt" DESC
-            LIMIT $1
-        `,replacements);
+        console.log('replacements',replacements)
 
-
-
-        // const qb = getConnection()
-            // .getRepository(Post)
-            // .createQueryBuilder("posts")
-            // .innerJoinAndSelect("posts.creator","user",'user.id = posts."creator_id"')
-            // .orderBy('posts."createdAt"','DESC')
-            // .take(realLimitPlusOne);
-        // if(cursor){
-        //     qb.where('posts."createdAt" < :cursor',{ cursor: new Date(Number(cursor)) })
-        // }
-        // const posts = await qb.getMany();
+        let posts:any[] = [];
+        try {
+            posts = await getConnection().query(`
+                SELECT 
+                    post.*,
+                    json_build_object(
+                        'id',public.user.id,
+                        'username',public.user.username,
+                        'email',public.user.email
+                    ) creator
+                FROM post
+                INNER JOIN public.user ON public.user.id = post.creator_id
+                ${cursor ? `WHERE post."createdAt" < $2` : ''}
+                ORDER BY post."createdAt" DESC
+                LIMIT $1
+            `,replacements);
+        } catch (error) {
+            console.log('posts error',error.message)
+        }
 
         return {
             hasMore:posts.length === realLimitPlusOne,

@@ -8,7 +8,7 @@ mutation CreatePost($input:PostInput!){
         id
         title
         text
-        creatorId
+        creator_id
       }
       
     }

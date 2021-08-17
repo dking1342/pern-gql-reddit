@@ -1,7 +1,6 @@
-import { Box, Flex, Link } from '@chakra-ui/react';
+import { Box, Flex } from '@chakra-ui/react';
 import { Form, Formik } from 'formik';
 import { withUrqlClient } from 'next-urql';
-import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import Btn from '../components/Btn';
@@ -11,8 +10,9 @@ import { useCreatePostMutation } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import { toErrorMap } from '../utils/toErrorMap';
 import { useIsAuth } from '../utils/useIsAuth';
+import dynamic from 'next/dynamic';
 
-
+const DynamicLoadingBox = dynamic(()=> import('../components/LoadingBox'),{ssr:false});
 
 const CreatePost: React.FC<{}> = ({}) => {
     const [_,createPost]=useCreatePostMutation();
@@ -20,26 +20,11 @@ const CreatePost: React.FC<{}> = ({}) => {
     const router = useRouter();
     let { user } = useIsAuth(router.route);
 
-
-    if(!Boolean(user)){
-        return(
-            <Layout variant="small">
-                <Flex>
-                    <Box>
-                        Loading...
-                    </Box>
-                    <Box>
-                        <NextLink href='/login'>
-                            <Link color="teal" variant="button" mr={2}>Go To Login</Link>
-                        </NextLink>
-                    </Box>
-                </Flex>
-            </Layout>
-        )
-    }
-
     return(
         <Layout variant="small">
+            {
+                (!Boolean(user)) && <DynamicLoadingBox />
+            }
             <Formik
                 initialValues={{ title:'',text:''}}
                 onSubmit={async(values,{setErrors})=>{
@@ -102,4 +87,4 @@ const CreatePost: React.FC<{}> = ({}) => {
     )
 };
 
-export default withUrqlClient(createUrqlClient)(CreatePost);
+export default withUrqlClient(createUrqlClient,{ssr:false})(CreatePost);
