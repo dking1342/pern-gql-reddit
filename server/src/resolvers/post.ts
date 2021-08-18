@@ -4,6 +4,7 @@ import { TypeormContext } from "src/types";
 import { isAuth } from "../utils/auth";
 import { User } from "../entities/User";
 import { getConnection } from "typeorm";
+import { Updoot } from "../entities/Updoot";
 
 @InputType()
 class PostInput {
@@ -65,37 +66,54 @@ export class PostResolver{
         const isUpdoot = value !== -1;
         const realValue = isUpdoot ? 1 : -1; 
         let err='';
+        const updoot = await Updoot.findOne({where:{post_id:postId,user_id:id}})
 
-        try {
-            await getConnection().query(`
-                START TRANSACTION;
+        if(updoot && updoot.value !== realValue){
+            try {
+                await getConnection().transaction(async tm => {
+                    await tm.query(`
+                        UPDATE updoot
+                        SET value = $1
+                        WHERE post_id = $2 AND user_id = $3
+                    `,[realValue,postId,id]);
+                    await tm.query(`
+                        UPDATE post
+                        SET points = points + $1
+                        WHERE id = $2;                    
+                    `,[2 * realValue,postId]);
+                })
+            } catch (error) {
+                console.log('vote error change',error.message)
+                err = error.message;
+            }
+        } else if(!updoot){
+            try {
+                await getConnection().transaction(async tm => {
+                    await tm.query(`
+                        INSERT INTO updoot(
+                            user_id,
+                            post_id,
+                            value
+                        )
+                        VALUES (
+                            $1,
+                            $2,
+                            $3
+                        );
+                    `,[id,postId,realValue]);
+                    await tm.query(`
+                        UPDATE post
+                        SET points = points + $1
+                        WHERE id = $2;
+                    `,[realValue,postId]);
+                })
+            } catch (error) {
+                console.log('vote error 2',error.message);
+                err = error.message;
+            }
+        } 
 
-                INSERT INTO updoot(
-                    user_id,
-                    post_id,
-                    value
-                )
-                VALUES (
-                    ${id},
-                    ${postId},
-                    ${realValue}
-                );
-
-                UPDATE post
-                SET points = points + ${realValue}
-                WHERE id = ${postId};
-
-                COMMIT;
-            `);            
-        } catch (error) {
-            err = error.message;
-            console.log('vote error',error.message)
-        }
-        if(Boolean(err)){
-            return false;
-        } else {
-            return true
-        }
+        return Boolean(err) ? false : true;
     }
 
     @Query(()=> PaginatedPost)
@@ -104,12 +122,24 @@ export class PostResolver{
         // @Arg('offset') offset:number,
         @Arg('cursor',()=>String,{nullable:true}) cursor:string | null,
         // @Info() info:any,
+        @Ctx() {req}:TypeormContext,
     ): Promise<PaginatedPost>{
+        let { auth } = isAuth(req);
+        // if(Boolean(errors.length)){
+        //     errors.forEach(err=>{
+        //         throw new Error(err.message);
+        //     })
+        // }
         const realLimit = Math.min(50,limit) + 1;
         const realLimitPlusOne = realLimit + 1;
         const replacements:any[] = [realLimitPlusOne,]
+        if(auth.id){
+            replacements.push(auth.id)
+        } 
+        let cursorIndex = 3;
         if(cursor){
             replacements.push(new Date(parseInt(cursor)));
+            cursorIndex = replacements.length;
         }
         console.log('replacements',replacements)
 
@@ -123,9 +153,10 @@ export class PostResolver{
                         'username',public.user.username,
                         'email',public.user.email
                     ) creator
+                ${auth.id ? ',(SELECT value FROM updoot WHERE user_id = $2 AND post_id = post.id) vote_status' : ', NULL AS vote_status'}
                 FROM post
                 INNER JOIN public.user ON public.user.id = post.creator_id
-                ${cursor ? `WHERE post."createdAt" < $2` : ''}
+                ${cursor ? `WHERE post."createdAt" < $${cursorIndex}` : ''}
                 ORDER BY post."createdAt" DESC
                 LIMIT $1
             `,replacements);

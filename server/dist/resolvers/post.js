@@ -18,6 +18,7 @@ const type_graphql_1 = require("type-graphql");
 const auth_1 = require("../utils/auth");
 const User_1 = require("../entities/User");
 const typeorm_1 = require("typeorm");
+const Updoot_1 = require("../entities/Updoot");
 let PostInput = class PostInput {
 };
 __decorate([
@@ -86,45 +87,68 @@ let PostResolver = class PostResolver {
         const isUpdoot = value !== -1;
         const realValue = isUpdoot ? 1 : -1;
         let err = '';
-        try {
-            await typeorm_1.getConnection().query(`
-                START TRANSACTION;
-
-                INSERT INTO updoot(
-                    user_id,
-                    post_id,
-                    value
-                )
-                VALUES (
-                    ${id},
-                    ${postId},
-                    ${realValue}
-                );
-
-                UPDATE post
-                SET points = points + ${realValue}
-                WHERE id = ${postId};
-
-                COMMIT;
-            `);
+        const updoot = await Updoot_1.Updoot.findOne({ where: { post_id: postId, user_id: id } });
+        if (updoot && updoot.value !== realValue) {
+            try {
+                await typeorm_1.getConnection().transaction(async (tm) => {
+                    await tm.query(`
+                        UPDATE updoot
+                        SET value = $1
+                        WHERE post_id = $2 AND user_id = $3
+                    `, [realValue, postId, id]);
+                    await tm.query(`
+                        UPDATE post
+                        SET points = points + $1
+                        WHERE id = $2;                    
+                    `, [2 * realValue, postId]);
+                });
+            }
+            catch (error) {
+                console.log('vote error change', error.message);
+                err = error.message;
+            }
         }
-        catch (error) {
-            err = error.message;
-            console.log('vote error', error.message);
+        else if (!updoot) {
+            try {
+                await typeorm_1.getConnection().transaction(async (tm) => {
+                    await tm.query(`
+                        INSERT INTO updoot(
+                            user_id,
+                            post_id,
+                            value
+                        )
+                        VALUES (
+                            $1,
+                            $2,
+                            $3
+                        );
+                    `, [id, postId, realValue]);
+                    await tm.query(`
+                        UPDATE post
+                        SET points = points + $1
+                        WHERE id = $2;
+                    `, [realValue, postId]);
+                });
+            }
+            catch (error) {
+                console.log('vote error 2', error.message);
+                err = error.message;
+            }
         }
-        if (Boolean(err)) {
-            return false;
-        }
-        else {
-            return true;
-        }
+        return Boolean(err) ? false : true;
     }
-    async posts(limit, cursor) {
+    async posts(limit, cursor, { req }) {
+        let { auth } = auth_1.isAuth(req);
         const realLimit = Math.min(50, limit) + 1;
         const realLimitPlusOne = realLimit + 1;
         const replacements = [realLimitPlusOne,];
+        if (auth.id) {
+            replacements.push(auth.id);
+        }
+        let cursorIndex = 3;
         if (cursor) {
             replacements.push(new Date(parseInt(cursor)));
+            cursorIndex = replacements.length;
         }
         console.log('replacements', replacements);
         let posts = [];
@@ -137,9 +161,10 @@ let PostResolver = class PostResolver {
                         'username',public.user.username,
                         'email',public.user.email
                     ) creator
+                ${auth.id ? ',(SELECT value FROM updoot WHERE user_id = $2 AND post_id = post.id) vote_status' : ', NULL AS vote_status'}
                 FROM post
                 INNER JOIN public.user ON public.user.id = post.creator_id
-                ${cursor ? `WHERE post."createdAt" < $2` : ''}
+                ${cursor ? `WHERE post."createdAt" < $${cursorIndex}` : ''}
                 ORDER BY post."createdAt" DESC
                 LIMIT $1
             `, replacements);
@@ -232,8 +257,9 @@ __decorate([
     type_graphql_1.Query(() => PaginatedPost),
     __param(0, type_graphql_1.Arg('limit', () => type_graphql_1.Int)),
     __param(1, type_graphql_1.Arg('cursor', () => String, { nullable: true })),
+    __param(2, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:paramtypes", [Number, Object, Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "posts", null);
 __decorate([

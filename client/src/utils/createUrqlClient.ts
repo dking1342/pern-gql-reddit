@@ -1,7 +1,9 @@
 import { authExchange } from "@urql/exchange-auth";
 import { Cache, cacheExchange, QueryInput, Resolver } from '@urql/exchange-graphcache';
-import { dedupExchange, fetchExchange, makeOperation } from "urql";
-import { ChangePasswordMutation, LoginMutation, LogoutMutation, RegisterMutation, UserInfoDocument, UserInfoQuery } from "../generated/graphql";
+import gql from "graphql-tag";
+import { dedupExchange, fetchExchange, makeOperation, ssrExchange } from "urql";
+import { ChangePasswordMutation, LoginMutation, LogoutMutation, RegisterMutation, UserInfoDocument, UserInfoQuery, VoteMutationVariables } from "../generated/graphql";
+import { isServer } from "./isServer";
 
 // helper function
 function betterUpdateQuery<Result,Query>(
@@ -51,7 +53,11 @@ const cursorPagination = ():Resolver => {
   };
 };
 
-export const createUrqlClient = (ssrExchange:any) => ({
+
+export const createUrqlClient = (_ssrExchange:any,ctx:any) => {
+  console.log('ctx',ctx)  
+  
+  return{
     url:'http://localhost:4000/graphql',
     exchanges: [
       dedupExchange,
@@ -66,18 +72,49 @@ export const createUrqlClient = (ssrExchange:any) => ({
         },
         updates:{
           Mutation:{
+            vote:(_result,args,cache,__)=>{
+              const { postId, value } = args as VoteMutationVariables;
+              const data = cache.readFragment(
+                gql`
+                  fragment _ on Post {
+                    id
+                    points
+                    vote_status
+                  }
+                `,{
+                  id:postId,
+                } as any
+              )
+
+              if(data){
+                if(data.vote_status === value) return;
+                const newPoints = (data.points as number) + (!data.vote_status ? 1 : 2) * value;
+                cache.writeFragment(
+                  gql`
+                    fragment __ on Post {
+                      points
+                      vote_status
+                    }
+                  `,{
+                    id:postId,
+                    points:newPoints,
+                    vote_status:value,
+                  }
+                )
+
+              }
+
+            },
             createPost:(_result,_,cache,__)=>{
               const allFields = cache.inspectFields("Query");
               const fieldInfos = allFields.filter((info)=> info.fieldName === 'posts');
               fieldInfos.forEach((fieldInfo)=>{
-                  console.log('fi',fieldInfo)
-                })
-                cache.invalidate(
-                  "Query",
-                  "posts",{
-                    limit:15
-                  }
-              );                
+                  cache.invalidate(
+                    "Query",
+                    "posts",
+                    fieldInfo.arguments || {}
+                );                
+              })
             },
             login:(_result,_,cache,__) => {
               betterUpdateQuery<LoginMutation,UserInfoQuery>(
@@ -152,7 +189,7 @@ export const createUrqlClient = (ssrExchange:any) => ({
         },
 
       }),
-      ssrExchange,
+      // ssrExchange,
       authExchange({
         addAuthToOperation: ({
           authState,
@@ -216,9 +253,10 @@ export const createUrqlClient = (ssrExchange:any) => ({
         },
   
       }),
+      ssrExchange,
       fetchExchange,
     ],       
-
-})
+  }
+}
 
 

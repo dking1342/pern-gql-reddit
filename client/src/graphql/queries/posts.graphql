@@ -7,6 +7,7 @@ query Posts($limit:Int!,$cursor:String){
       updatedAt
       title
       textSnippet
+      vote_status
       creator_id
       points
       creator{

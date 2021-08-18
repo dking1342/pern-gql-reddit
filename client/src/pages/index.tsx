@@ -2,6 +2,7 @@ import { Box, Button, Flex, Heading, Stack, Text } from '@chakra-ui/react';
 import { withUrqlClient } from 'next-urql';
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
+import Vote from '../components/Vote';
 import { usePostsQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 
@@ -32,14 +33,15 @@ const Index = ({}) => {
             ) : (
               <Stack>
                 {
-                  data!.posts.posts.map((p)=> (
-                    <Box p={5} shadow="md" borderWidth="1px" key={p.id}>
-                      <Heading fontSize="xl">{p.title}</Heading>
-                      <Text mt={2}>posted by: {p.creator.username}</Text>
-                      <Text mt={4}>{p.textSnippet}</Text>
-                      <Text mt={4}>Points: {p.points}</Text>
-                      
-                    </Box>
+                  data!.posts.posts.map((post)=> (
+                    <Flex p={5} shadow="md" borderWidth="1px" key={post.id}>
+                      <Vote post={post}/>
+                      <Box>
+                        <Heading fontSize="xl">{post.title}</Heading>
+                        <Text mt={2}>posted by: {post.creator.username}</Text>
+                        <Text mt={4}>{post.textSnippet}</Text>
+                      </Box>
+                    </Flex>
                   ))
                 }
               </Stack>
@@ -65,4 +67,4 @@ const Index = ({}) => {
   )
 }
 
-export default withUrqlClient(createUrqlClient,{ssr:false})(Index)
+export default withUrqlClient(createUrqlClient,{ssr:true})(Index)
