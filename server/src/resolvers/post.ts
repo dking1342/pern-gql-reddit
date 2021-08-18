@@ -39,6 +39,34 @@ class PaginatedPost{
     hasMore:boolean
 }
 
+@ObjectType()
+class CreatorType{
+    @Field()
+    id:number
+    @Field()
+    username:string
+}
+
+@ObjectType()
+class JointPost{
+    @Field()
+    id:number
+    @Field()
+    createdAt:Date
+    @Field()
+    updatedAt:Date
+    @Field()
+    title:string
+    @Field()
+    text:string
+    @Field()
+    creator_id:number
+    @Field()
+    points:number
+    @Field(()=>CreatorType)
+    creator:CreatorType
+}
+
 @Resolver(Post)
 export class PostResolver{
     @FieldResolver(()=>String)
@@ -125,11 +153,7 @@ export class PostResolver{
         @Ctx() {req}:TypeormContext,
     ): Promise<PaginatedPost>{
         let { auth } = isAuth(req);
-        // if(Boolean(errors.length)){
-        //     errors.forEach(err=>{
-        //         throw new Error(err.message);
-        //     })
-        // }
+
         const realLimit = Math.min(50,limit) + 1;
         const realLimitPlusOne = realLimit + 1;
         const replacements:any[] = [realLimitPlusOne,]
@@ -141,7 +165,6 @@ export class PostResolver{
             replacements.push(new Date(parseInt(cursor)));
             cursorIndex = replacements.length;
         }
-        console.log('replacements',replacements)
 
         let posts:any[] = [];
         try {
@@ -170,11 +193,30 @@ export class PostResolver{
         };
     }
 
-    @Query(()=>Post,{nullable:true})
-    postById(
+    @Query(()=>JointPost)
+    async post(
         @Arg('id',()=>Int) id: number,
-    ) : Promise<Post | undefined>{
-        return Post.findOne(id);
+    ) : Promise<JointPost | undefined>{
+        let post:any;
+        try {
+            post = await getConnection().query(`
+                SELECT 
+                    post.*,
+                    json_build_object(
+                        'id',public.user.id,
+                        'username',public.user.username,
+                        'email',public.user.email
+                    ) creator
+                FROM post
+                INNER JOIN public.user ON public.user.id = post.creator_id
+                WHERE post.id = ${id}
+                LIMIT 1
+            `);
+        } catch (error) {
+            console.log('postbyid error',error.message);
+            return undefined;
+        }
+        return post[0] as JointPost;
     }
 
     @Mutation(()=>PostResponse)

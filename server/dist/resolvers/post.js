@@ -71,6 +71,56 @@ __decorate([
 PaginatedPost = __decorate([
     type_graphql_1.ObjectType()
 ], PaginatedPost);
+let CreatorType = class CreatorType {
+};
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Number)
+], CreatorType.prototype, "id", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", String)
+], CreatorType.prototype, "username", void 0);
+CreatorType = __decorate([
+    type_graphql_1.ObjectType()
+], CreatorType);
+let JointPost = class JointPost {
+};
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Number)
+], JointPost.prototype, "id", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Date)
+], JointPost.prototype, "createdAt", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Date)
+], JointPost.prototype, "updatedAt", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", String)
+], JointPost.prototype, "title", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", String)
+], JointPost.prototype, "text", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Number)
+], JointPost.prototype, "creator_id", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Number)
+], JointPost.prototype, "points", void 0);
+__decorate([
+    type_graphql_1.Field(() => CreatorType),
+    __metadata("design:type", CreatorType)
+], JointPost.prototype, "creator", void 0);
+JointPost = __decorate([
+    type_graphql_1.ObjectType()
+], JointPost);
 let PostResolver = class PostResolver {
     textSnippet(root) {
         return root.text.slice(0, 50);
@@ -150,7 +200,6 @@ let PostResolver = class PostResolver {
             replacements.push(new Date(parseInt(cursor)));
             cursorIndex = replacements.length;
         }
-        console.log('replacements', replacements);
         let posts = [];
         try {
             posts = await typeorm_1.getConnection().query(`
@@ -177,8 +226,28 @@ let PostResolver = class PostResolver {
             posts: posts.slice(0, realLimit),
         };
     }
-    postById(id) {
-        return Post_1.Post.findOne(id);
+    async post(id) {
+        let post;
+        try {
+            post = await typeorm_1.getConnection().query(`
+                SELECT 
+                    post.*,
+                    json_build_object(
+                        'id',public.user.id,
+                        'username',public.user.username,
+                        'email',public.user.email
+                    ) creator
+                FROM post
+                INNER JOIN public.user ON public.user.id = post.creator_id
+                WHERE post.id = ${id}
+                LIMIT 1
+            `);
+        }
+        catch (error) {
+            console.log('postbyid error', error.message);
+            return undefined;
+        }
+        return post[0];
     }
     async createPost(input, { req }) {
         let { auth, errors } = auth_1.isAuth(req);
@@ -263,12 +332,12 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "posts", null);
 __decorate([
-    type_graphql_1.Query(() => Post_1.Post, { nullable: true }),
+    type_graphql_1.Query(() => JointPost),
     __param(0, type_graphql_1.Arg('id', () => type_graphql_1.Int)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
-], PostResolver.prototype, "postById", null);
+], PostResolver.prototype, "post", null);
 __decorate([
     type_graphql_1.Mutation(() => PostResponse),
     __param(0, type_graphql_1.Arg("input")),

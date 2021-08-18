@@ -1,9 +1,8 @@
 import { authExchange } from "@urql/exchange-auth";
 import { Cache, cacheExchange, QueryInput, Resolver } from '@urql/exchange-graphcache';
 import gql from "graphql-tag";
-import { dedupExchange, fetchExchange, makeOperation, ssrExchange } from "urql";
+import { dedupExchange, fetchExchange, makeOperation } from "urql";
 import { ChangePasswordMutation, LoginMutation, LogoutMutation, RegisterMutation, UserInfoDocument, UserInfoQuery, VoteMutationVariables } from "../generated/graphql";
-import { isServer } from "./isServer";
 
 // helper function
 function betterUpdateQuery<Result,Query>(
@@ -54,8 +53,8 @@ const cursorPagination = ():Resolver => {
 };
 
 
-export const createUrqlClient = (_ssrExchange:any,ctx:any) => {
-  console.log('ctx',ctx)  
+export const createUrqlClient = (ssrExchange:any) => {
+ 
   
   return{
     url:'http://localhost:4000/graphql',
