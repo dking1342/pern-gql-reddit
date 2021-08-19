@@ -62,9 +62,11 @@ const Navbar: React.FC<{}> = ({}) => {
     const { user, logoutFn } = useContext(UserContext);
     const router = useRouter();
     const handleLogout = () => {
-        logout().then(res=>logoutFn(res));
-        logout();
-        router.push("/")
+        logout().then(res=>{
+          logoutFn(res)
+          logout();
+          router.reload();
+        });
     }
     const { isOpen, onToggle } = useDisclosure();
     

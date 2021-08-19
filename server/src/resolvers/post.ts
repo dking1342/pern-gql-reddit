@@ -39,42 +39,34 @@ class PaginatedPost{
     hasMore:boolean
 }
 
-@ObjectType()
-class CreatorType{
-    @Field()
-    id:number
-    @Field()
-    username:string
-}
-
-@ObjectType()
-class JointPost{
-    @Field()
-    id:number
-    @Field()
-    createdAt:Date
-    @Field()
-    updatedAt:Date
-    @Field()
-    title:string
-    @Field()
-    text:string
-    @Field()
-    creator_id:number
-    @Field()
-    points:number
-    @Field(()=>CreatorType)
-    creator:CreatorType
-}
-
 @Resolver(Post)
 export class PostResolver{
     @FieldResolver(()=>String)
-    textSnippet(
-        @Root() root:Post
-    ){
+    textSnippet(@Root() root:Post){
         return root.text.slice(0,50);        
     }
+
+    @FieldResolver(()=>User)
+    creator(
+        @Root() post:Post,
+        @Ctx(){userLoader}:TypeormContext
+    ){
+        return userLoader.load(post.creator_id.toString());        
+    }
+
+    // @FieldResolver(()=>Int,{nullable:true})
+    // async vote_status(        
+    //     @Root() post:Post,
+    //     @Ctx(){voteLoader,req}:TypeormContext
+    // ){
+    //     let { auth, errors } = isAuth(req);
+    //     if(Boolean(errors.length)){
+    //         return null;
+    //     }
+    //     const vote = await voteLoader.load({userId:Number(auth.id),postId:Number(post.id)});
+    //     console.log('vote',vote)
+    //     return vote ? vote.value : null;
+    // }
 
     @Mutation(()=>Boolean)
     async vote(
@@ -159,7 +151,7 @@ export class PostResolver{
         const replacements:any[] = [realLimitPlusOne,]
         if(auth.id){
             replacements.push(auth.id)
-        } 
+        }
         let cursorIndex = 3;
         if(cursor){
             replacements.push(new Date(parseInt(cursor)));
@@ -168,20 +160,28 @@ export class PostResolver{
 
         let posts:any[] = [];
         try {
+            // posts = await getConnection().query(`
+            //     SELECT 
+            //         post.*,
+            //         json_build_object(
+            //             'id',public.user.id,
+            //             'username',public.user.username,
+            //             'email',public.user.email
+            //         ) creator
+            //     ${auth.id ? ',(SELECT value FROM updoot WHERE user_id = $2 AND post_id = post.id) vote_status' : ', NULL AS vote_status'}
+            //     FROM post
+            //     INNER JOIN public.user ON public.user.id = post.creator_id
+            //     ${cursor ? `WHERE post."createdAt" < $${cursorIndex}` : ''}
+            //     ORDER BY post."createdAt" DESC
+            //     LIMIT $1
+            // `,replacements);
             posts = await getConnection().query(`
-                SELECT 
-                    post.*,
-                    json_build_object(
-                        'id',public.user.id,
-                        'username',public.user.username,
-                        'email',public.user.email
-                    ) creator
+                SELECT post.*
                 ${auth.id ? ',(SELECT value FROM updoot WHERE user_id = $2 AND post_id = post.id) vote_status' : ', NULL AS vote_status'}
                 FROM post
-                INNER JOIN public.user ON public.user.id = post.creator_id
                 ${cursor ? `WHERE post."createdAt" < $${cursorIndex}` : ''}
                 ORDER BY post."createdAt" DESC
-                LIMIT $1
+                LIMIT $1;
             `,replacements);
         } catch (error) {
             console.log('posts error',error.message)
@@ -193,30 +193,11 @@ export class PostResolver{
         };
     }
 
-    @Query(()=>JointPost)
+    @Query(()=>Post)
     async post(
         @Arg('id',()=>Int) id: number,
-    ) : Promise<JointPost | undefined>{
-        let post:any;
-        try {
-            post = await getConnection().query(`
-                SELECT 
-                    post.*,
-                    json_build_object(
-                        'id',public.user.id,
-                        'username',public.user.username,
-                        'email',public.user.email
-                    ) creator
-                FROM post
-                INNER JOIN public.user ON public.user.id = post.creator_id
-                WHERE post.id = ${id}
-                LIMIT 1
-            `);
-        } catch (error) {
-            console.log('postbyid error',error.message);
-            return undefined;
-        }
-        return post[0] as JointPost;
+    ) : Promise<Post | undefined>{
+        return Post.findOne(id);
     }
 
     @Mutation(()=>PostResponse)

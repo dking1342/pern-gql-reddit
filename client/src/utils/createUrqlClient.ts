@@ -52,10 +52,17 @@ const cursorPagination = ():Resolver => {
   };
 };
 
+// helper funtion
+const invalidateAllPosts = (cache:Cache) => {
+  const allFields = cache.inspectFields("Query");
+  const fieldInfos = allFields.filter(info=>info.fieldName === "posts");
+  fieldInfos.forEach((fi)=>{
+    cache.invalidate("Query","posts",fi.arguments || {})
+  })
+}
 
 export const createUrqlClient = (ssrExchange:any) => {
  
-  
   return{
     url:'http://localhost:4000/graphql',
     exchanges: [
@@ -111,15 +118,7 @@ export const createUrqlClient = (ssrExchange:any) => {
 
             },
             createPost:(_result,_,cache,__)=>{
-              const allFields = cache.inspectFields("Query");
-              const fieldInfos = allFields.filter((info)=> info.fieldName === 'posts');
-              fieldInfos.forEach((fieldInfo)=>{
-                  cache.invalidate(
-                    "Query",
-                    "posts",
-                    fieldInfo.arguments || {}
-                );                
-              })
+              invalidateAllPosts(cache);
             },
             login:(_result,_,cache,__) => {
               betterUpdateQuery<LoginMutation,UserInfoQuery>(
@@ -136,6 +135,7 @@ export const createUrqlClient = (ssrExchange:any) => {
                   }
                 }
               );
+              invalidateAllPosts(cache);
             },
             register:(_result,_,cache,__) => {
               betterUpdateQuery<RegisterMutation,UserInfoQuery>(

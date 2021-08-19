@@ -8,6 +8,8 @@ import { buildSchema } from 'type-graphql';
 import cors from 'cors';
 import { createConnection } from 'typeorm';
 import typeormConfig from './config/typeorm';
+import { creatorLoader } from './utils/creatorLoader';
+import { voteLoader } from './utils/voteLoader';
 // import { MikroORM } from "@mikro-orm/core";
 // import mikroConfig from './config/mikro-orm.config';
 
@@ -36,7 +38,11 @@ const main = async () => {
                 validate:false,
                 
             }),
-            context:(req)=>({ req })
+            context:(req)=>({ 
+                req, 
+                userLoader:creatorLoader(),
+                voteLoader:voteLoader()
+            })
         });
 
         // apollo server init

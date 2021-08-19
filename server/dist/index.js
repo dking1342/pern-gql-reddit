@@ -13,6 +13,8 @@ const type_graphql_1 = require("type-graphql");
 const cors_1 = __importDefault(require("cors"));
 const typeorm_1 = require("typeorm");
 const typeorm_2 = __importDefault(require("./config/typeorm"));
+const creatorLoader_1 = require("./utils/creatorLoader");
+const voteLoader_1 = require("./utils/voteLoader");
 dotenv_1.default.config();
 const main = async () => {
     try {
@@ -26,7 +28,11 @@ const main = async () => {
                 resolvers: [post_1.PostResolver, users_1.UserResolver],
                 validate: false,
             }),
-            context: (req) => ({ req })
+            context: (req) => ({
+                req,
+                userLoader: creatorLoader_1.creatorLoader(),
+                voteLoader: voteLoader_1.voteLoader()
+            })
         });
         await apolloServer.start();
         await apolloServer.applyMiddleware({ app });

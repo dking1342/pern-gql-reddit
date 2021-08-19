@@ -1,24 +1,21 @@
-import { Box, Button, Flex, Heading, IconButton, Link, Stack, Text } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Link, Stack, Text } from '@chakra-ui/react';
 import { withUrqlClient } from 'next-urql';
-import React, { useContext, useState } from 'react';
+import NextLink from 'next/link';
+import React, { useState } from 'react';
+import Btns from '../components/Btns';
 import Layout from '../components/Layout';
 import Vote from '../components/Vote';
-import { useDeletePostMutation, usePostsQuery } from '../generated/graphql';
+import { usePostsQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
-import NextLink from 'next/link';
-import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
-import { UserContext } from '../context/userContext';
 
 const Index = ({}) => {
   const [variables,setVariables] = useState({
     limit:15,
     cursor:null as string | null
   })
-  const [{data, fetching,stale}] = usePostsQuery({
+  const [{data, fetching,stale,error}] = usePostsQuery({
     variables,
   });
-  const [_,deletePost] = useDeletePostMutation();
-  let { user } = useContext(UserContext);
 
   return(
     <main>
@@ -32,8 +29,9 @@ const Index = ({}) => {
                 <Heading>loading...</Heading>
               </Flex>
             ) : !fetching && !data?.posts.posts ? (
-              <Flex justify="center" mt={4}>
+              <Flex justify="center" mt={4} flexDirection="column" alignItems="center">
                 <Heading>no posts here</Heading>
+                <Text mt={2}>{error?.message}</Text>
               </Flex>
             ) : (
               <Stack>
@@ -50,32 +48,7 @@ const Index = ({}) => {
                         <Text mt={2}>posted by: {post.creator.username}</Text>
                         <Text mt={4}>{post.textSnippet}</Text>
                       </Box>
-                      <Flex width="10%" flexDirection="column" alignItems="flex-end" justify="space-between">
-                        {
-                          post.creator_id === user?.id ? (
-                            <>
-                              <NextLink href="/post/edit/[id]" as={`/post/edit/${post.id}`}>
-                                <IconButton
-                                  as={Link}
-                                  colorScheme="facebook"
-                                  color="ivory"
-                                  aria-label="edit post"
-                                  icon={<EditIcon />}
-                                />
-                              </NextLink>
-                              <IconButton
-                                colorScheme="red"
-                                aria-label="delete post"
-                                icon={<DeleteIcon />}
-                                onClick={()=>{
-                                  let id = Number(post.id);
-                                  deletePost({id})
-                                }}
-                              />
-                            </>
-                          ) : null
-                        }
-                      </Flex>
+                      <Btns owner={post.creator_id} postId={Number(post.id)} />
                     </Flex>
                   ))
                 }
