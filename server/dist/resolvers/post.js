@@ -287,33 +287,19 @@ let PostResolver = class PostResolver {
             }
         }
     }
-    async updatePost(id, title, text) {
-        let updatedPost;
-        try {
-            updatedPost = await typeorm_1.getConnection().query(`
-                UPDATE post
-                SET title = $1,text = $2
-                WHERE id = $3
-                RETURNING *;
-            `, [title, text, id]);
-        }
-        catch (error) {
-            console.log('update post error', error.message);
+    async updatePost(id, title, text, { req }) {
+        let { errors } = auth_1.isAuth(req);
+        if (Boolean(errors.length)) {
             return null;
         }
-        if (Boolean(updatedPost.length)) {
-            try {
-                let post = await Post_1.Post.findOne({ id });
-                return post ? post : null;
-            }
-            catch (error) {
-                console.log('update find error', error.message);
-                return null;
-            }
-        }
-        else {
-            return null;
-        }
+        const post = await typeorm_1.getConnection()
+            .createQueryBuilder()
+            .update(Post_1.Post)
+            .set({ title, text })
+            .where('id = :id', { id })
+            .returning("*")
+            .execute();
+        return post.raw[0];
     }
     async deletePost(id, { req }) {
         let { auth, errors } = auth_1.isAuth(req);
@@ -375,8 +361,9 @@ __decorate([
     __param(0, type_graphql_1.Arg("id", () => type_graphql_1.Int)),
     __param(1, type_graphql_1.Arg("title")),
     __param(2, type_graphql_1.Arg("text")),
+    __param(3, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, String, String]),
+    __metadata("design:paramtypes", [Number, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "updatePost", null);
 __decorate([

@@ -272,31 +272,20 @@ export class PostResolver{
         @Arg("id",()=>Int) id: number,
         @Arg("title") title: string,
         @Arg("text") text: string,
+        @Ctx(){req}:TypeormContext,
     ): Promise<Post | null>{
-        let updatedPost:Post[];
-
-        try {
-            updatedPost = await getConnection().query(`
-                UPDATE post
-                SET title = $1,text = $2
-                WHERE id = $3
-                RETURNING *;
-            `,[title,text,id]);
-        } catch (error) {
-            console.log('update post error',error.message);
+        let { errors } = isAuth(req);
+        if(Boolean(errors.length)){
             return null;
         }
-        if(Boolean(updatedPost.length)){
-            try {
-                let post = await Post.findOne({id});
-                return post ? post : null;                
-            } catch (error) {
-                console.log('update find error',error.message)
-                return null;
-            }
-        } else {
-            return null;
-        }
+        const post = await getConnection()
+            .createQueryBuilder()
+            .update(Post)
+            .set({title,text})
+            .where('id = :id',{id})
+            .returning("*")
+            .execute();
+        return post.raw[0] as Post;
     }
 
     @Mutation(()=>Boolean)

@@ -6,7 +6,7 @@ import Vote from '../components/Vote';
 import { useDeletePostMutation, usePostsQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import NextLink from 'next/link';
-import { DeleteIcon } from '@chakra-ui/icons';
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import { UserContext } from '../context/userContext';
 
 const Index = ({}) => {
@@ -50,21 +50,32 @@ const Index = ({}) => {
                         <Text mt={2}>posted by: {post.creator.username}</Text>
                         <Text mt={4}>{post.textSnippet}</Text>
                       </Box>
-                      <Box width="10%">
+                      <Flex width="10%" flexDirection="column" alignItems="flex-end" justify="space-between">
                         {
                           post.creator_id === user?.id ? (
-                            <IconButton
-                              colorScheme="red"
-                              aria-label="delete post"
-                              icon={<DeleteIcon />}
-                              onClick={()=>{
-                                let id = Number(post.id);
-                                deletePost({id})
-                              }}
-                            />
+                            <>
+                              <NextLink href="/post/edit/[id]" as={`/post/edit/${post.id}`}>
+                                <IconButton
+                                  as={Link}
+                                  colorScheme="facebook"
+                                  color="ivory"
+                                  aria-label="edit post"
+                                  icon={<EditIcon />}
+                                />
+                              </NextLink>
+                              <IconButton
+                                colorScheme="red"
+                                aria-label="delete post"
+                                icon={<DeleteIcon />}
+                                onClick={()=>{
+                                  let id = Number(post.id);
+                                  deletePost({id})
+                                }}
+                              />
+                            </>
                           ) : null
                         }
-                      </Box>
+                      </Flex>
                     </Flex>
                   ))
                 }
