@@ -21,7 +21,7 @@ const Login: React.FC<{}> = ({}) => {
     const router = useRouter();
     const { loginFn } = useContext(UserContext);   
     let { user } = useIsAuth(router.route);
-      
+
     if(Boolean(user)){
         return(
             <Layout variant="small">
@@ -41,6 +41,7 @@ const Login: React.FC<{}> = ({}) => {
                 initialValues={{email:'',password:''}}
                 onSubmit={async(values,{setErrors})=>{
                     let response = await login(values);
+                    
                     loginFn(response);
                     if(response.data?.login.errors){
                         setErrors(toErrorMap(response.data?.login.errors))

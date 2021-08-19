@@ -15,7 +15,6 @@ type userType = {
 }
 
 type fnType = (payload:any) => void;
-// type userFn = (payload:any) => userType | null;
 let userInfo = ():userType | null => {
     if(typeof window !== 'undefined'){
         let isLocalStorage = Boolean(window.localStorage.getItem('userInfo'));
@@ -36,6 +35,7 @@ export type initialStateType = {
     registerFn:fnType,
     logoutFn:fnType,
     changePasswordFn:fnType,
+    expireTokenFn:fnType,
 }
 
 
@@ -47,6 +47,7 @@ const initialState:initialStateType = {
     registerFn:()=>{},
     logoutFn:()=>{},
     changePasswordFn:()=>{},
+    expireTokenFn:()=>{},
 }
 
 export const UserContext = createContext(initialState);
@@ -136,6 +137,13 @@ export const UserProvider = (props:any) => {
         }
     }
 
+    const expireTokenFn:fnType = () => {
+        localStorage.removeItem('userInfo');
+        dispatch({
+            type:USER_LOGOUT
+        })
+    }
+
 
     return(
         <UserContext.Provider
@@ -145,7 +153,8 @@ export const UserProvider = (props:any) => {
                 loginFn,
                 registerFn,
                 logoutFn,
-                changePasswordFn
+                changePasswordFn,
+                expireTokenFn
             }}
         >
             {props.children}

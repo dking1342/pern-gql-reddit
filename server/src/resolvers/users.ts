@@ -63,12 +63,23 @@ class UserResponse{
 }
 
 @ObjectType()
+class UInfo{
+    @Field()
+    iat:number
+    @Field()
+    exp:number
+}
+
+@ObjectType()
 class UserInfoResponse {
     @Field(()=>[FieldError],{nullable:true})
     errors?:FieldError[]
 
     @Field(()=>User,{nullable:true})
     user?:User | undefined | null
+
+    @Field(()=>UInfo,{nullable:true})
+    userTokenDetails?: UInfo | null
 }
 
 @Resolver(User)
@@ -171,7 +182,11 @@ export class UserResolver{
             try {
                 const user = await User.findOne({where:{username:auth.username}});
                 return{
-                    user
+                    user,
+                    userTokenDetails:{
+                        iat:auth.iat,
+                        exp:auth.exp
+                    }
                 }
             } catch (error) {
                 return{

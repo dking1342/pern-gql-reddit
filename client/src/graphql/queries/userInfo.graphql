@@ -1,13 +1,17 @@
 query UserInfo{
-    userInfo{
-        errors{
-            field
-            message
-        }
-        user{
-            id
-            username
-            email
-        }
+  userInfo {
+    errors {
+      field
+      message
     }
+    user{
+      id
+      username
+      email
+    }
+    userTokenDetails{
+      iat
+      exp
+    }
+  }
 }

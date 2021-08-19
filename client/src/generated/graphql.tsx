@@ -12,33 +12,12 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-  /** The javascript `Date` as string. Type represents date and time as the ISO Date string. */
-  DateTime: any;
 };
-
-export type CreatorType = {
-  __typename?: 'CreatorType';
-  id: Scalars['Float'];
-  username: Scalars['String'];
-};
-
 
 export type FieldError = {
   __typename?: 'FieldError';
   field: Scalars['String'];
   message: Scalars['String'];
-};
-
-export type JointPost = {
-  __typename?: 'JointPost';
-  id: Scalars['Float'];
-  createdAt: Scalars['DateTime'];
-  updatedAt: Scalars['DateTime'];
-  title: Scalars['String'];
-  text: Scalars['String'];
-  creator_id: Scalars['Float'];
-  points: Scalars['Float'];
-  creator: CreatorType;
 };
 
 export type Mutation = {
@@ -138,7 +117,7 @@ export type PostResponse = {
 export type Query = {
   __typename?: 'Query';
   posts: PaginatedPost;
-  post: JointPost;
+  post: Post;
   userInfo?: Maybe<UserInfoResponse>;
 };
 
@@ -159,6 +138,12 @@ export type RegisterInput = {
   password: Scalars['String'];
 };
 
+export type UInfo = {
+  __typename?: 'UInfo';
+  iat: Scalars['Float'];
+  exp: Scalars['Float'];
+};
+
 export type User = {
   __typename?: 'User';
   id: Scalars['Float'];
@@ -173,6 +158,7 @@ export type UserInfoResponse = {
   __typename?: 'UserInfoResponse';
   errors?: Maybe<Array<FieldError>>;
   user?: Maybe<User>;
+  userTokenDetails?: Maybe<UInfo>;
 };
 
 export type UserResponse = {
@@ -358,11 +344,11 @@ export type PostQueryVariables = Exact<{
 export type PostQuery = (
   { __typename?: 'Query' }
   & { post: (
-    { __typename?: 'JointPost' }
-    & Pick<JointPost, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'text' | 'points' | 'creator_id'>
+    { __typename?: 'Post' }
+    & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'text' | 'points' | 'creator_id'>
     & { creator: (
-      { __typename?: 'CreatorType' }
-      & Pick<CreatorType, 'id' | 'username'>
+      { __typename?: 'User' }
+      & Pick<User, 'id' | 'username'>
     ) }
   ) }
 );
@@ -402,6 +388,9 @@ export type UserInfoQuery = (
     )>>, user?: Maybe<(
       { __typename?: 'User' }
       & Pick<User, 'id' | 'username' | 'email'>
+    )>, userTokenDetails?: Maybe<(
+      { __typename?: 'UInfo' }
+      & Pick<UInfo, 'iat' | 'exp'>
     )> }
   )> }
 );
@@ -619,6 +608,10 @@ export const UserInfoDocument = gql`
       id
       username
       email
+    }
+    userTokenDetails {
+      iat
+      exp
     }
   }
 }

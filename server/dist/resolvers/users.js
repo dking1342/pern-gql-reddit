@@ -111,6 +111,19 @@ __decorate([
 UserResponse = __decorate([
     type_graphql_1.ObjectType()
 ], UserResponse);
+let UInfo = class UInfo {
+};
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Number)
+], UInfo.prototype, "iat", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    __metadata("design:type", Number)
+], UInfo.prototype, "exp", void 0);
+UInfo = __decorate([
+    type_graphql_1.ObjectType()
+], UInfo);
 let UserInfoResponse = class UserInfoResponse {
 };
 __decorate([
@@ -121,6 +134,10 @@ __decorate([
     type_graphql_1.Field(() => User_1.User, { nullable: true }),
     __metadata("design:type", Object)
 ], UserInfoResponse.prototype, "user", void 0);
+__decorate([
+    type_graphql_1.Field(() => UInfo, { nullable: true }),
+    __metadata("design:type", Object)
+], UserInfoResponse.prototype, "userTokenDetails", void 0);
 UserInfoResponse = __decorate([
     type_graphql_1.ObjectType()
 ], UserInfoResponse);
@@ -193,7 +210,11 @@ let UserResolver = class UserResolver {
             try {
                 const user = await User_1.User.findOne({ where: { username: auth.username } });
                 return {
-                    user
+                    user,
+                    userTokenDetails: {
+                        iat: auth.iat,
+                        exp: auth.exp
+                    }
                 };
             }
             catch (error) {

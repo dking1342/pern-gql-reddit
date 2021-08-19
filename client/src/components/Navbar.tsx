@@ -25,7 +25,7 @@ import NextLink from 'next/link';
 import { useRouter } from "next/router";
 import React, { useContext } from 'react';
 import { UserContext } from '../context/userContext';
-import { useLogoutMutation } from '../generated/graphql';
+import { useLogoutMutation, useUserInfoQuery } from '../generated/graphql';
 
 interface NavItem {
     label: string;
@@ -59,7 +59,7 @@ const NAV_ITEMS: Array<NavItem> = [
 
 const Navbar: React.FC<{}> = ({}) => {
     const [{fetching:logoutFetching},logout] = useLogoutMutation();
-    const { user, logoutFn } = useContext(UserContext);
+    const { user, logoutFn, expireTokenFn } = useContext(UserContext);
     const router = useRouter();
     const handleLogout = () => {
         logout().then(res=>{
@@ -67,6 +67,16 @@ const Navbar: React.FC<{}> = ({}) => {
           logout();
           router.reload();
         });
+    }
+    const [{data}] = useUserInfoQuery();
+    if(data?.userInfo?.user?.id === user?.id && data?.userInfo?.userTokenDetails){
+      let { exp } = data.userInfo.userTokenDetails;
+      const currentTimestamp = Date.now();
+
+      if(exp * 1000 <= currentTimestamp){
+        expireTokenFn(null);
+        handleLogout();
+      } 
     }
     const { isOpen, onToggle } = useDisclosure();
     

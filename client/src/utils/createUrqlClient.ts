@@ -70,6 +70,8 @@ export const createUrqlClient = (ssrExchange:any) => {
       cacheExchange({
         keys:{
           PaginatedPost: ()=>null,
+          UserInfoResponse: ()=>null,
+          UInfo:()=>null,
         },
         resolvers:{
           Query:{
@@ -121,6 +123,7 @@ export const createUrqlClient = (ssrExchange:any) => {
               invalidateAllPosts(cache);
             },
             login:(_result,_,cache,__) => {
+
               betterUpdateQuery<LoginMutation,UserInfoQuery>(
                 cache,
                 {query:UserInfoDocument},
