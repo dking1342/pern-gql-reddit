@@ -12,7 +12,7 @@ const Vote: React.FC<VoteProps> = ({post}) => {
     const [_,vote] = useVoteMutation();
 
     return(
-        <Box display="flex" flexDirection="column" alignItems="center" justify="center" mr={4} >
+        <Box display="flex" flexDirection="column" alignItems="center" justify="center" mr={4} width="10%" >
             <IconButton 
                 size="md"
                 variant="ghost"

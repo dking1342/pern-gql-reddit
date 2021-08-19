@@ -12,12 +12,33 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  /** The javascript `Date` as string. Type represents date and time as the ISO Date string. */
+  DateTime: any;
 };
+
+export type CreatorType = {
+  __typename?: 'CreatorType';
+  id: Scalars['Float'];
+  username: Scalars['String'];
+};
+
 
 export type FieldError = {
   __typename?: 'FieldError';
   field: Scalars['String'];
   message: Scalars['String'];
+};
+
+export type JointPost = {
+  __typename?: 'JointPost';
+  id: Scalars['Float'];
+  createdAt: Scalars['DateTime'];
+  updatedAt: Scalars['DateTime'];
+  title: Scalars['String'];
+  text: Scalars['String'];
+  creator_id: Scalars['Float'];
+  points: Scalars['Float'];
+  creator: CreatorType;
 };
 
 export type Mutation = {
@@ -116,7 +137,7 @@ export type PostResponse = {
 export type Query = {
   __typename?: 'Query';
   posts: PaginatedPost;
-  post: Post;
+  post: JointPost;
   userInfo?: Maybe<UserInfoResponse>;
 };
 
@@ -224,6 +245,16 @@ export type CreatePostMutation = (
   ) }
 );
 
+export type DeletePostMutationVariables = Exact<{
+  id: Scalars['Int'];
+}>;
+
+
+export type DeletePostMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'deletePost'>
+);
+
 export type ForgotPasswordMutationVariables = Exact<{
   email: Scalars['String'];
 }>;
@@ -311,11 +342,11 @@ export type PostQueryVariables = Exact<{
 export type PostQuery = (
   { __typename?: 'Query' }
   & { post: (
-    { __typename?: 'Post' }
-    & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'text' | 'points' | 'creator_id'>
+    { __typename?: 'JointPost' }
+    & Pick<JointPost, 'id' | 'createdAt' | 'updatedAt' | 'title' | 'text' | 'points' | 'creator_id'>
     & { creator: (
-      { __typename?: 'User' }
-      & Pick<User, 'id' | 'username'>
+      { __typename?: 'CreatorType' }
+      & Pick<CreatorType, 'id' | 'username'>
     ) }
   ) }
 );
@@ -420,6 +451,15 @@ export const CreatePostDocument = gql`
 
 export function useCreatePostMutation() {
   return Urql.useMutation<CreatePostMutation, CreatePostMutationVariables>(CreatePostDocument);
+};
+export const DeletePostDocument = gql`
+    mutation deletePost($id: Int!) {
+  deletePost(id: $id)
+}
+    `;
+
+export function useDeletePostMutation() {
+  return Urql.useMutation<DeletePostMutation, DeletePostMutationVariables>(DeletePostDocument);
 };
 export const ForgotPasswordDocument = gql`
     mutation ForgotPassword($email: String!) {

@@ -270,22 +270,48 @@ export class PostResolver{
     @Mutation(()=>Post,{nullable:true})
     async updatePost(
         @Arg("id",()=>Int) id: number,
-        @Arg("title",()=>String, { nullable:true}) title: string,
-    ): Promise<Post | undefined>{
-        const post = await Post.findOne(id);
-        if(!post) return undefined;
-        if(typeof title !== 'undefined'){
-            await Post.update({id},{title});
+        @Arg("title") title: string,
+        @Arg("text") text: string,
+    ): Promise<Post | null>{
+        let updatedPost:Post[];
+
+        try {
+            updatedPost = await getConnection().query(`
+                UPDATE post
+                SET title = $1,text = $2
+                WHERE id = $3
+                RETURNING *;
+            `,[title,text,id]);
+        } catch (error) {
+            console.log('update post error',error.message);
+            return null;
         }
-        return post;
+        if(Boolean(updatedPost.length)){
+            try {
+                let post = await Post.findOne({id});
+                return post ? post : null;                
+            } catch (error) {
+                console.log('update find error',error.message)
+                return null;
+            }
+        } else {
+            return null;
+        }
     }
 
     @Mutation(()=>Boolean)
     async deletePost(
         @Arg("id",()=>Int) id: number,
+        @Ctx() { req }: TypeormContext
     ): Promise<boolean>{
+        let { auth, errors } = isAuth(req);
+        if(Boolean(errors.length)){
+            return false;
+        }
+
         try {
-            await Post.delete(id)
+            await Updoot.delete({post_id:id});
+            await Post.delete({id,creator_id:auth.id});
             return true;
         } catch (error) {
             return false;

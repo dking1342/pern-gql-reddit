@@ -2,7 +2,7 @@ import { authExchange } from "@urql/exchange-auth";
 import { Cache, cacheExchange, QueryInput, Resolver } from '@urql/exchange-graphcache';
 import gql from "graphql-tag";
 import { dedupExchange, fetchExchange, makeOperation } from "urql";
-import { ChangePasswordMutation, LoginMutation, LogoutMutation, RegisterMutation, UserInfoDocument, UserInfoQuery, VoteMutationVariables } from "../generated/graphql";
+import { ChangePasswordMutation, DeletePostMutationVariables, LoginMutation, LogoutMutation, RegisterMutation, UserInfoDocument, UserInfoQuery, VoteMutationVariables } from "../generated/graphql";
 
 // helper function
 function betterUpdateQuery<Result,Query>(
@@ -71,6 +71,12 @@ export const createUrqlClient = (ssrExchange:any) => {
         },
         updates:{
           Mutation:{
+            deletePost:(_result,args,cache,__)=>{
+              cache.invalidate({
+                __typename:"Post",
+                id:(args as DeletePostMutationVariables).id
+              })
+            },
             vote:(_result,args,cache,__)=>{
               const { postId, value } = args as VoteMutationVariables;
               const data = cache.readFragment(
